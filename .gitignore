@@ -1,0 +1,6 @@
+.idea/
+config.php
+*.log
+.env
+vendor/
+node_modules/
