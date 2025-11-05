@@ -78,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
+
+// Preuzmi usluge za prikaz
+$usluge_lista = get_usluge();
 ?>
 <!DOCTYPE html>
 <html lang="sr">
@@ -110,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="container">
     <div class="page-header">
         <h1>➕ Dodaj novo vozilo</h1>
-        <a href="lista.php" class="btn btn-secondary">📋 Vidi sve poslove</a>
+        <a href="../../lista_vozila.php" class="btn btn-secondary">📋 Vidi sve poslove</a>
     </div>
 
     <?php if ($greska): ?>
@@ -122,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php if ($uspeh): ?>
         <div class="alert alert-success">
             <?php echo e($uspeh); ?>
-            <a href="lista.php">Vidi listu vozila</a>
+            <a href="../../lista_vozila.php">Vidi listu vozila</a>
         </div>
     <?php endif; ?>
 
@@ -137,23 +140,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="form-group">
                         <label for="registracija">Registarska oznaka *</label>
                         <input
-                            type="text"
-                            id="registracija"
-                            name="registracija"
-                            required
-                            placeholder="npr. BG-123-AB"
-                            value="<?php echo e($_POST['registracija'] ?? ''); ?>"
+                                type="text"
+                                id="registracija"
+                                name="registracija"
+                                required
+                                placeholder="npr. BG-123-AB"
+                                value="<?php echo e($_POST['registracija'] ?? ''); ?>"
                         >
                     </div>
 
                     <div class="form-group">
                         <label for="sasija">Broj šasije (VIN)</label>
                         <input
-                            type="text"
-                            id="sasija"
-                            name="sasija"
-                            placeholder="npr. WBA12345678901234"
-                            value="<?php echo e($_POST['sasija'] ?? ''); ?>"
+                                type="text"
+                                id="sasija"
+                                name="sasija"
+                                placeholder="npr. WBA12345678901234"
+                                value="<?php echo e($_POST['sasija'] ?? ''); ?>"
                         >
                     </div>
                 </div>
@@ -161,12 +164,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label for="marka">Marka vozila *</label>
                     <input
-                        type="text"
-                        id="marka"
-                        name="marka"
-                        required
-                        placeholder="npr. BMW X5"
-                        value="<?php echo e($_POST['marka'] ?? ''); ?>"
+                            type="text"
+                            id="marka"
+                            name="marka"
+                            required
+                            placeholder="npr. BMW X5"
+                            value="<?php echo e($_POST['marka'] ?? ''); ?>"
                     >
                 </div>
             </div>
@@ -178,24 +181,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label for="vlasnik">Ime i prezime vlasnika *</label>
                     <input
-                        type="text"
-                        id="vlasnik"
-                        name="vlasnik"
-                        required
-                        placeholder="npr. Marko Marković"
-                        value="<?php echo e($_POST['vlasnik'] ?? ''); ?>"
+                            type="text"
+                            id="vlasnik"
+                            name="vlasnik"
+                            required
+                            placeholder="npr. Marko Marković"
+                            value="<?php echo e($_POST['vlasnik'] ?? ''); ?>"
                     >
                 </div>
 
                 <div class="form-group">
                     <label for="kontakt">Kontakt telefon *</label>
                     <input
-                        type="tel"
-                        id="kontakt"
-                        name="kontakt"
-                        required
-                        placeholder="npr. 061 123 4567"
-                        value="<?php echo e($_POST['kontakt'] ?? ''); ?>"
+                            type="tel"
+                            id="kontakt"
+                            name="kontakt"
+                            required
+                            placeholder="npr. 061 123 4567"
+                            value="<?php echo e($_POST['kontakt'] ?? ''); ?>"
                     >
                 </div>
             </div>
@@ -216,11 +219,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label for="slika_vozila">Upload slika (opciono)</label>
                     <input
-                        type="file"
-                        id="slika_vozila"
-                        name="slika_vozila"
-                        accept="image/*"
-                        class="file-input"
+                            type="file"
+                            id="slika_vozila"
+                            name="slika_vozila"
+                            accept="image/*"
+                            class="file-input"
                     >
                     <small>Max 5MB, formati: JPG, PNG, WEBP</small>
                 </div>
@@ -247,23 +250,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-section">
                 <h2>🔧 Potrebne usluge</h2>
 
-                <div class="checkbox-group">
-                    <?php
-                    $usluge_lista = get_usluge();
-                    $izabrane_usluge = $_POST['usluge'] ?? [];
-                    foreach ($usluge_lista as $key => $naziv):
-                        ?>
-                        <label class="checkbox-label">
-                            <input
-                                type="checkbox"
-                                name="usluge[]"
-                                value="<?php echo $key; ?>"
-                                <?php echo in_array($key, $izabrane_usluge) ? 'checked' : ''; ?>
-                            >
-                            <span><?php echo e($naziv); ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
+                <?php if (empty($usluge_lista)): ?>
+                    <div class="alert alert-error">
+                        Nema dostupnih usluga. Molimo administratora da doda usluge.
+                        <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
+                            <br><a href="../usluge/dodaj.php">Dodaj prvu uslugu</a>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="checkbox-group">
+                        <?php
+                        $izabrane_usluge = $_POST['usluge'] ?? [];
+                        foreach ($usluge_lista as $id => $usluga):
+                            ?>
+                            <label class="checkbox-label">
+                                <input
+                                        type="checkbox"
+                                        name="usluge[]"
+                                        value="<?php echo $id; ?>"
+                                        data-cena="<?php echo $usluga['cena']; ?>"
+                                        class="usluga-checkbox"
+                                    <?php echo in_array($id, $izabrane_usluge) ? 'checked' : ''; ?>
+                                >
+                                <span>
+                                    <?php echo e($usluga['naziv']); ?>
+                                    <strong style="color: #667eea;">(<?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD)</strong>
+                                </span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- CENA -->
@@ -271,16 +287,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <h2>💰 Cena</h2>
 
                 <div class="form-group">
-                    <label for="cena">Cena (RSD)</label>
+                    <label for="cena">Ukupna cena (RSD)</label>
                     <input
-                        type="number"
-                        id="cena"
-                        name="cena"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value="<?php echo e($_POST['cena'] ?? '0'); ?>"
+                            type="number"
+                            id="cena"
+                            name="cena"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value="<?php echo e($_POST['cena'] ?? '0'); ?>"
+                            readonly
+                            style="background: #f8f9fa; font-size: 20px; font-weight: bold; color: #28a745;"
                     >
+                    <small>Cena se automatski izračunava na osnovu izabranih usluga</small>
                 </div>
             </div>
 
@@ -291,10 +310,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label for="napomena">Dodatne napomene (opciono)</label>
                     <textarea
-                        id="napomena"
-                        name="napomena"
-                        rows="4"
-                        placeholder="Unesite bilo kakve dodatne informacije..."
+                            id="napomena"
+                            name="napomena"
+                            rows="4"
+                            placeholder="Unesite bilo kakve dodatne informacije..."
                     ><?php echo e($_POST['napomena'] ?? ''); ?></textarea>
                 </div>
             </div>
@@ -314,5 +333,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 <script src="../../assets/js/main.js"></script>
+<script>
+    // Automatski račun cene
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.usluga-checkbox');
+        const cenaInput = document.getElementById('cena');
+
+        function updateCena() {
+            let ukupno = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    ukupno += parseFloat(cb.dataset.cena);
+                }
+            });
+            cenaInput.value = ukupno.toFixed(2);
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateCena);
+        });
+
+        // Inicijalno izračunaj cenu
+        updateCena();
+    });
+</script>
 </body>
 </html>

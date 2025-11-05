@@ -42,18 +42,43 @@ function upload_slika($file, $folder = 'vozila') {
     }
 }
 
-// Dobavi sve dostupne usluge
+// Dobavi sve dostupne usluge iz baze
 function get_usluge() {
-    return [
-        'tehnicki_pregled' => 'Tehnički pregled',
-        'registracija' => 'Registracija vozila',
-        'carina' => 'Carina',
-        'ugradnja_tahografa' => 'Ugradnja tahografa',
-        'ispitivanje_vozila' => 'Ispitivanje vozila',
-        'reatest' => 'Reatest TNG/KPG',
-        'utiskivanje_oznaka' => 'Utiskivanje identifikacionih oznaka',
-        'probne_tablice' => 'Izdavanje probnih tablica'
-    ];
+    global $conn;
+
+    $stmt = $conn->query("SELECT id, naziv, cena FROM usluge WHERE aktivan = 1 ORDER BY naziv");
+    $usluge = [];
+
+    while ($row = $stmt->fetch()) {
+        $usluge[$row['id']] = [
+            'naziv' => $row['naziv'],
+            'cena' => $row['cena']
+        ];
+    }
+
+    return $usluge;
+}
+
+// Dobavi naziv usluge po ID-u
+function get_usluga_naziv($id) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT naziv FROM usluge WHERE id = ?");
+    $stmt->execute([$id]);
+    $result = $stmt->fetch();
+
+    return $result ? $result['naziv'] : 'Nepoznata usluga';
+}
+
+// Dobavi cenu usluge po ID-u
+function get_usluga_cena($id) {
+    global $conn;
+
+    $stmt = $conn->prepare("SELECT cena FROM usluge WHERE id = ?");
+    $stmt->execute([$id]);
+    $result = $stmt->fetch();
+
+    return $result ? $result['cena'] : 0;
 }
 
 // Dobavi status badge

@@ -79,6 +79,7 @@ $lokacija = $_SESSION['lokacija'];
             <a href="modules/vozila/dodaj.php" class="btn btn-primary">➕ Dodaj vozilo</a>
             <a href="lista_vozila.php" class="btn btn-secondary">📊 Pregledaj sve poslove</a>
             <?php if ($tip != 'zaposleni'): ?>
+                <a href="modules/usluge/lista.php" class="btn btn-secondary">🔧 Upravljaj uslugama</a>
                 <a href="#" class="btn btn-secondary">👥 Upravljaj korisnicima</a>
             <?php endif; ?>
         </div>

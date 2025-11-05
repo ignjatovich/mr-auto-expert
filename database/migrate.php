@@ -94,8 +94,13 @@ class Migrator {
     }
 
     private function getExecutedMigrations() {
-        $stmt = $this->conn->query("SELECT migration FROM migrations ORDER BY id");
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        try {
+            $stmt = $this->conn->query("SELECT migration FROM migrations ORDER BY id");
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            // Ako tabela migrations ne postoji, vrati prazan niz
+            return [];
+        }
     }
 
     private function runMigration($migration, $direction) {
@@ -129,7 +134,10 @@ class Migrator {
             $this->conn->commit();
 
         } catch (PDOException $e) {
-            $this->conn->rollBack();
+            // Proveri da li je transakcija aktivna pre rollback-a
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
             echo "❌ Greška u migraciji $migration: " . $e->getMessage() . "\n";
         }
     }

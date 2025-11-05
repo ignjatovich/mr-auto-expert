@@ -38,8 +38,8 @@ if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['lokacija'] != $_SESSIO
     exit();
 }
 
-// Promena statusa
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['promeni_status'])) {
+// Promena statusa - ISPRAVLJENO
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['novi_status'])) {
     $novi_status = $_POST['novi_status'] ?? '';
 
     if (in_array($novi_status, ['u_radu', 'zavrseno', 'placeno'])) {
@@ -133,7 +133,7 @@ $usluge_lista = get_usluge();
             margin-bottom: 20px;
         }
 
-        .status-current.u-radu {
+        .status-current.u_radu {
             background: #dc3545;
             color: white;
         }
@@ -171,6 +171,7 @@ $usluge_lista = get_usluge();
 
         .btn-status-u-radu:hover {
             background: #c82333;
+            transform: translateY(-2px);
         }
 
         .btn-status-zavrseno {
@@ -180,6 +181,7 @@ $usluge_lista = get_usluge();
 
         .btn-status-zavrseno:hover {
             background: #e0a800;
+            transform: translateY(-2px);
         }
 
         .btn-status-placeno {
@@ -189,6 +191,7 @@ $usluge_lista = get_usluge();
 
         .btn-status-placeno:hover {
             background: #218838;
+            transform: translateY(-2px);
         }
 
         .usluge-lista {
@@ -269,26 +272,16 @@ $usluge_lista = get_usluge();
             <form method="POST" action="" style="margin-top: 20px;">
                 <p style="margin-bottom: 15px;"><strong>Promeni status:</strong></p>
                 <div class="status-buttons">
-                    <button type="submit" name="promeni_status" value="u_radu" class="btn-status btn-status-u-radu">
+                    <button type="submit" name="novi_status" value="u_radu" class="btn-status btn-status-u-radu">
                         🔴 U radu
                     </button>
-                    <button type="submit" name="promeni_status" value="zavrseno" class="btn-status btn-status-zavrseno">
+                    <button type="submit" name="novi_status" value="zavrseno" class="btn-status btn-status-zavrseno">
                         🟡 Završeno
                     </button>
-                    <button type="submit" name="promeni_status" value="placeno" class="btn-status btn-status-placeno">
+                    <button type="submit" name="novi_status" value="placeno" class="btn-status btn-status-placeno">
                         🟢 Plaćeno
                     </button>
                 </div>
-                <input type="hidden" name="novi_status" value="">
-                <script>
-                    document.querySelectorAll('.btn-status').forEach(btn => {
-                        btn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            document.querySelector('input[name="novi_status"]').value = this.value;
-                            this.closest('form').submit();
-                        });
-                    });
-                </script>
             </form>
         </div>
     </div>
