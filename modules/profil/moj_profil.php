@@ -1,38 +1,25 @@
 <?php
-$base_url = '../../';
-require_once '../../config.php';
-require_once '../../includes/db.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
-require_once '../../includes/header.php';
+$base_url = '../';
+require_once '../config.php';
+require_once '../includes/db.php';
+require_once '../includes/auth.php';
+require_once '../includes/functions.php';
+require_once '../includes/header.php';
 
-// Samo administrator i menadžer mogu pristupiti
-proveri_tip(['administrator', 'menadzer']);
+proveri_login();
 
-$id = $_GET['id'] ?? 0;
+$korisnik_id = $_SESSION['korisnik_id'];
 $greska = '';
 $uspeh = '';
 
-if (empty($id)) {
-    header('Location: lista.php');
-    exit();
-}
-
-// Preuzmi korisnika
+// Preuzmi trenutne podatke korisnika
 $stmt = $conn->prepare("SELECT * FROM korisnici WHERE id = ?");
-$stmt->execute([$id]);
+$stmt->execute([$korisnik_id]);
 $korisnik = $stmt->fetch();
 
 if (!$korisnik) {
     $_SESSION['greska'] = 'Korisnik ne postoji!';
-    header('Location: lista.php');
-    exit();
-}
-
-// Provera da li menadžer pokušava da menja administratora ili menadžera
-if ($_SESSION['tip_korisnika'] == 'menadzer' && in_array($korisnik['tip_korisnika'], ['administrator', 'menadzer'])) {
-    $_SESSION['greska'] = 'Nemate dozvolu da menjate ovog korisnika!';
-    header('Location: lista.php');
+    header('Location: ../dashboard.php');
     exit();
 }
 
@@ -41,28 +28,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $prezime = trim($_POST['prezime'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $telefon = trim($_POST['telefon'] ?? '');
-    $tip_korisnika = $_POST['tip_korisnika'] ?? $korisnik['tip_korisnika'];
-    $lokacija = $_POST['lokacija'] ?? '';
-    $aktivan = isset($_POST['aktivan']) ? 1 : 0;
+    $stara_sifra = $_POST['stara_sifra'] ?? '';
     $nova_sifra = $_POST['nova_sifra'] ?? '';
     $potvrdi_sifru = $_POST['potvrdi_sifru'] ?? '';
 
     if (empty($ime)) {
-        $greska = 'Ime je obavezno.';
-    } elseif (empty($lokacija)) {
-        $greska = 'Lokacija je obavezna.';
+        $greska = 'Ime je obavezno polje.';
     } else {
-        // Provera da li menadžer pokušava da dodeli tip administratora ili menadžera
-        if ($_SESSION['tip_korisnika'] == 'menadzer' && in_array($tip_korisnika, ['administrator', 'menadzer'])) {
-            $greska = 'Menadžer ne može dodeliti tip administratora ili menadžera.';
-        }
-
-        // Provera nove šifre
+        // Proveri da li menja šifru
         $menja_sifru = false;
-        if (!empty($nova_sifra) || !empty($potvrdi_sifru)) {
+        if (!empty($stara_sifra) || !empty($nova_sifra) || !empty($potvrdi_sifru)) {
             $menja_sifru = true;
 
-            if (strlen($nova_sifra) < 6) {
+            if (empty($stara_sifra)) {
+                $greska = 'Unesite trenutnu šifru.';
+            } elseif (!password_verify($stara_sifra, $korisnik['sifra'])) {
+                $greska = 'Trenutna šifra nije tačna.';
+            } elseif (empty($nova_sifra)) {
+                $greska = 'Unesite novu šifru.';
+            } elseif (strlen($nova_sifra) < 6) {
                 $greska = 'Nova šifra mora imati najmanje 6 karaktera.';
             } elseif ($nova_sifra !== $potvrdi_sifru) {
                 $greska = 'Nove šifre se ne poklapaju.';
@@ -75,25 +59,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $nova_sifra_hash = password_hash($nova_sifra, PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("
                     UPDATE korisnici 
-                    SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, aktivan = ?, sifra = ?
+                    SET ime = ?, prezime = ?, email = ?, telefon = ?, sifra = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $lokacija, $aktivan, $nova_sifra_hash, $id]);
-                $uspeh = 'Korisnik i šifra uspešno ažurirani!';
+                $stmt->execute([$ime, $prezime, $email, $telefon, $nova_sifra_hash, $korisnik_id]);
+                $uspeh = 'Profil i šifra uspešno ažurirani!';
             } else {
                 // Ažuriraj samo podatke
                 $stmt = $conn->prepare("
                     UPDATE korisnici 
-                    SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, aktivan = ?
+                    SET ime = ?, prezime = ?, email = ?, telefon = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $lokacija, $aktivan, $id]);
-                $uspeh = 'Korisnik uspešno ažuriran!';
+                $stmt->execute([$ime, $prezime, $email, $telefon, $korisnik_id]);
+                $uspeh = 'Profil uspešno ažuriran!';
             }
+
+            // Ažuriraj session podatke
+            $_SESSION['ime'] = $ime;
+            $_SESSION['prezime'] = $prezime;
 
             // Osvezi podatke
             $stmt = $conn->prepare("SELECT * FROM korisnici WHERE id = ?");
-            $stmt->execute([$id]);
+            $stmt->execute([$korisnik_id]);
             $korisnik = $stmt->fetch();
         }
     }
@@ -102,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <div class="container">
         <div class="page-header">
-            <h1>✏️ Izmeni korisnika: <?php echo e($korisnik['korisnicko_ime']); ?></h1>
-            <a href="lista.php" class="btn btn-secondary">← Nazad na listu</a>
+            <h1>👤 Moj profil</h1>
+            <a href="../dashboard.php" class="btn btn-secondary">← Nazad</a>
         </div>
 
         <?php if ($greska): ?>
@@ -123,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <!-- OSNOVNI PODACI -->
                 <div class="form-section">
-                    <h2>👤 Lični podaci</h2>
+                    <h2>📝 Osnovni podaci</h2>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -172,50 +160,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                 </div>
 
-                <!-- TIP KORISNIKA I LOKACIJA -->
+                <!-- INFORMACIJE O NALOGU -->
                 <div class="form-section">
-                    <h2>⚙️ Podešavanja naloga</h2>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="tip_korisnika">Tip korisnika *</label>
-                            <select id="tip_korisnika" name="tip_korisnika" required>
-                                <?php if ($_SESSION['tip_korisnika'] == 'administrator'): ?>
-                                    <option value="administrator" <?php echo ($korisnik['tip_korisnika'] == 'administrator') ? 'selected' : ''; ?>>Administrator</option>
-                                    <option value="menadzer" <?php echo ($korisnik['tip_korisnika'] == 'menadzer') ? 'selected' : ''; ?>>Menadžer</option>
-                                <?php endif; ?>
-                                <option value="zaposleni" <?php echo ($korisnik['tip_korisnika'] == 'zaposleni') ? 'selected' : ''; ?>>Zaposleni</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lokacija">Lokacija *</label>
-                            <select id="lokacija" name="lokacija" required>
-                                <option value="Ostružnica" <?php echo ($korisnik['lokacija'] == 'Ostružnica') ? 'selected' : ''; ?>>Ostružnica</option>
-                                <option value="Žarkovo" <?php echo ($korisnik['lokacija'] == 'Žarkovo') ? 'selected' : ''; ?>>Žarkovo</option>
-                                <option value="Mirijevo" <?php echo ($korisnik['lokacija'] == 'Mirijevo') ? 'selected' : ''; ?>>Mirijevo</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="checkbox-label" style="border: none; padding: 0; background: transparent;">
-                            <input
-                                type="checkbox"
-                                name="aktivan"
-                                value="1"
-                                <?php echo $korisnik['aktivan'] ? 'checked' : ''; ?>
-                            >
-                            <span>Nalog je aktivan</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- INFORMACIJE -->
-                <div class="form-section">
-                    <h2>ℹ️ Informacije</h2>
+                    <h2>ℹ️ Informacije o nalogu</h2>
                     <div class="info-box">
                         <strong>Korisničko ime:</strong> <?php echo e($korisnik['korisnicko_ime']); ?><br>
+                        <strong>Tip korisnika:</strong>
+                        <span class="badge badge-<?php echo $korisnik['tip_korisnika']; ?>">
+                        <?php echo ucfirst($korisnik['tip_korisnika']); ?>
+                    </span><br>
+                        <strong>Lokacija:</strong> <?php echo e($korisnik['lokacija']); ?><br>
                         <strong>Datum kreiranja:</strong> <?php echo formatuj_datum($korisnik['datum_kreiranja']); ?>
                     </div>
                 </div>
@@ -223,7 +177,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <!-- PROMENA ŠIFRE -->
                 <div class="form-section">
                     <h2>🔒 Promena šifre</h2>
-                    <p style="color: #666; margin-bottom: 15px;">Popuni samo ako želiš da promeniš šifru korisniku</p>
+                    <p style="color: #666; margin-bottom: 15px;">Popuni samo ako želiš da promeniš šifru</p>
+
+                    <div class="form-group">
+                        <label for="stara_sifra">Trenutna šifra</label>
+                        <input
+                            type="password"
+                            id="stara_sifra"
+                            name="stara_sifra"
+                            placeholder="Unesite trenutnu šifru"
+                        >
+                    </div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -253,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <button type="submit" class="btn btn-primary btn-lg">
                         ✅ Sačuvaj izmene
                     </button>
-                    <a href="lista.php" class="btn btn-secondary btn-lg">
+                    <a href="../dashboard.php" class="btn btn-secondary btn-lg">
                         ❌ Otkaži
                     </a>
                 </div>
@@ -262,4 +226,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-<?php require_once '../../includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

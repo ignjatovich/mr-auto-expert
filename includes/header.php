@@ -51,13 +51,16 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
                 <a href="<?php echo $base_url ?? ''; ?>modules/usluge/lista.php" class="nav-link">
                     🔧 Usluge
                 </a>
+                <a href="<?php echo $base_url ?? ''; ?>modules/korisnici/lista.php" class="nav-link">
+                    👥 Korisnici
+                </a>
             <?php endif; ?>
         </div>
 
         <!-- User Info & Hamburger -->
         <div class="nav-right">
             <div class="nav-user">
-
+                <span class="user-name"><?php echo htmlspecialchars($ime . ' ' . $prezime); ?></span>
                 <span class="badge badge-<?php echo $tip; ?>">
                     <?php echo ucfirst($tip); ?>
                 </span>
@@ -108,6 +111,10 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
                     <span class="mobile-link-icon">🔧</span>
                     <span class="mobile-link-text">Usluge</span>
                 </a>
+                <a href="<?php echo $base_url ?? ''; ?>modules/korisnici/lista.php" class="mobile-link">
+                    <span class="mobile-link-icon">👥</span>
+                    <span class="mobile-link-text">Korisnici</span>
+                </a>
             <?php endif; ?>
             <a href="<?php echo $base_url ?? ''; ?>modules/vozila/dodaj.php" class="mobile-link mobile-link-primary">
                 <span class="mobile-link-icon">➕</span>
@@ -116,6 +123,10 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
         </div>
 
         <div class="mobile-menu-footer">
+            <a href="<?php echo $base_url ?? ''; ?>modules/profil/moj_profil.php" class="mobile-link">
+                <span class="mobile-link-icon">👤</span>
+                <span class="mobile-link-text">Moj profil</span>
+            </a>
             <a href="<?php echo $base_url ?? ''; ?>logout.php" class="mobile-link mobile-link-logout">
                 <span class="mobile-link-icon">🚪</span>
                 <span class="mobile-link-text">Odjavi se</span>
