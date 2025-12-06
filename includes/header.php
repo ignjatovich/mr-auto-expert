@@ -57,7 +57,7 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
         <!-- User Info & Hamburger -->
         <div class="nav-right">
             <div class="nav-user">
-                <span class="user-name"><?php echo htmlspecialchars($ime . ' ' . $prezime); ?></span>
+
                 <span class="badge badge-<?php echo $tip; ?>">
                     <?php echo ucfirst($tip); ?>
                 </span>

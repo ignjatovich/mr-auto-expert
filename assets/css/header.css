@@ -376,66 +376,46 @@
 
 /* Tablets and Mobile */
 @media (max-width: 768px) {
+
     .nav-container {
         min-height: 65px;
         padding: 10px 15px;
         gap: 10px;
+
+        /* KLJUČNO: levo logo – desno sve ostalo */
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .mobile-menu {
-        top: 65px;
-        height: calc(100vh - 65px);
-    }
-
+    /* KLJUČNO: logo gura sve udesno */
     .nav-brand {
-        flex: 0 1 auto;
-        max-width: 50%;
+        flex: 1 !important;
+        max-width: none !important;
     }
 
+    /* Hamburger i user info ostaju desno */
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    /* Po želji – smanjen logo */
     .nav-brand a {
         font-size: 16px;
         line-height: 1.3;
+        display: flex;
+        align-items: center;
     }
 
     .desktop-only {
         display: none !important;
     }
-
-    /* User info - kompaktniji prikaz */
-    .nav-user {
-        gap: 6px;
-        font-size: 12px;
-    }
-
-    .user-name {
-        font-size: 12px;
-        max-width: 100px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .badge {
-        font-size: 9px;
-        padding: 3px 7px;
-    }
-
-    .hamburger {
-        width: 28px;
-        height: 22px;
-    }
-
-    .hamburger span {
-        height: 2.5px;
-    }
-
-    .hamburger.active span:nth-child(1) {
-        transform: translateY(9.75px) rotate(45deg);
-    }
-
-    .hamburger.active span:nth-child(3) {
-        transform: translateY(-9.75px) rotate(-45deg);
-    }
 }
+
 
 /* Small Mobile Phones */
 @media (max-width: 480px) {
