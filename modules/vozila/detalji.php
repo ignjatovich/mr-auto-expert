@@ -6,6 +6,10 @@ require_once '../../includes/functions.php';
 
 proveri_login();
 
+// Postavi promenljive za header
+$page_title = 'Detalji vozila - ' . SITE_NAME;
+$base_url = '../../';
+
 $id = $_GET['id'] ?? 0;
 $greska = '';
 $uspeh = '';
@@ -38,7 +42,7 @@ if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['lokacija'] != $_SESSIO
     exit();
 }
 
-// Promena statusa - ISPRAVLJENO
+// Promena statusa
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['novi_status'])) {
     $novi_status = $_POST['novi_status'] ?? '';
 
@@ -70,14 +74,11 @@ if (!empty($usluge_ids) && is_array($usluge_ids)) {
     $stmt->execute($usluge_ids);
     $usluge_detalji = $stmt->fetchAll();
 }
+
+// Include header
+include '../../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="sr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalji vozila - <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
+
     <style>
         .detail-section {
             background: white;
@@ -230,200 +231,180 @@ if (!empty($usluge_ids) && is_array($usluge_ids)) {
             font-size: 16px;
         }
     </style>
-</head>
-<body>
-<nav class="navbar">
-    <div class="nav-container">
-        <div class="nav-brand">
-            <a href="../../dashboard.php" style="color: inherit; text-decoration: none;">
-                🚗 Mr Auto Expert DOO
-            </a>
-        </div>
-        <div class="nav-menu">
-            <span class="nav-user">
-                <?php echo e($_SESSION['ime'] . ' ' . $_SESSION['prezime']); ?>
-                <span class="badge badge-<?php echo $_SESSION['tip_korisnika']; ?>">
-                    <?php echo ucfirst($_SESSION['tip_korisnika']); ?>
-                </span>
-            </span>
-            <a href="../../logout.php" class="btn btn-secondary btn-sm">Odjavi se</a>
-        </div>
-    </div>
-</nav>
 
-<div class="container">
-    <div class="page-header">
-        <h1>🚗 Detalji vozila: <?php echo e($vozilo['registracija']); ?></h1>
-        <div>
-            <a href="../../lista_vozila.php" class="btn btn-secondary">← Nazad na listu</a>
-            <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
-                <a href="izmeni.php?id=<?php echo $id; ?>" class="btn btn-primary">✏️ Izmeni</a>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <?php if ($greska): ?>
-        <div class="alert alert-error">
-            <?php echo e($greska); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($uspeh): ?>
-        <div class="alert alert-success">
-            <?php echo e($uspeh); ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- Status -->
-    <div class="detail-section">
-        <h2>📊 Status vozila</h2>
-        <div class="status-section">
+    <div class="container">
+        <div class="page-header">
+            <h1>🚗 Detalji vozila: <?php echo htmlspecialchars($vozilo['registracija']); ?></h1>
             <div>
-                <strong>Trenutni status:</strong><br>
-                <span class="status-current <?php echo $vozilo['status']; ?>">
+                <a href="../../lista_vozila.php" class="btn btn-secondary">← Nazad na listu</a>
+                <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
+                    <a href="izmeni.php?id=<?php echo $id; ?>" class="btn btn-primary">✏️ Izmeni</a>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($greska): ?>
+            <div class="alert alert-error">
+                <?php echo htmlspecialchars($greska); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($uspeh): ?>
+            <div class="alert alert-success">
+                <?php echo htmlspecialchars($uspeh); ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Status -->
+        <div class="detail-section">
+            <h2>📊 Status vozila</h2>
+            <div class="status-section">
+                <div>
+                    <strong>Trenutni status:</strong><br>
+                    <span class="status-current <?php echo $vozilo['status']; ?>">
                     <?php echo get_status_text($vozilo['status']); ?>
                 </span>
-            </div>
-
-            <form method="POST" action="" style="margin-top: 20px;">
-                <p style="margin-bottom: 15px;"><strong>Promeni status:</strong></p>
-                <div class="status-buttons">
-                    <button type="submit" name="novi_status" value="u_radu" class="btn-status btn-status-u-radu">
-                        🔴 U radu
-                    </button>
-                    <button type="submit" name="novi_status" value="zavrseno" class="btn-status btn-status-zavrseno">
-                        🟡 Završeno
-                    </button>
-                    <button type="submit" name="novi_status" value="placeno" class="btn-status btn-status-placeno">
-                        🟢 Plaćeno
-                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Identifikacija vozila -->
-    <div class="detail-section">
-        <h2>🚗 Identifikacija vozila</h2>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <div class="detail-label">Registarska oznaka</div>
-                <div class="detail-value"><strong><?php echo e($vozilo['registracija']); ?></strong></div>
+                <form method="POST" action="" style="margin-top: 20px;">
+                    <p style="margin-bottom: 15px;"><strong>Promeni status:</strong></p>
+                    <div class="status-buttons">
+                        <button type="submit" name="novi_status" value="u_radu" class="btn-status btn-status-u-radu">
+                            🔴 U radu
+                        </button>
+                        <button type="submit" name="novi_status" value="zavrseno" class="btn-status btn-status-zavrseno">
+                            🟡 Završeno
+                        </button>
+                        <button type="submit" name="novi_status" value="placeno" class="btn-status btn-status-placeno">
+                            🟢 Plaćeno
+                        </button>
+                    </div>
+                </form>
             </div>
-            <?php if ($vozilo['sasija']): ?>
+        </div>
+
+        <!-- Identifikacija vozila -->
+        <div class="detail-section">
+            <h2>🚗 Identifikacija vozila</h2>
+            <div class="detail-grid">
                 <div class="detail-item">
-                    <div class="detail-label">Broj šasije (VIN)</div>
-                    <div class="detail-value"><?php echo e($vozilo['sasija']); ?></div>
+                    <div class="detail-label">Registarska oznaka</div>
+                    <div class="detail-value"><strong><?php echo htmlspecialchars($vozilo['registracija']); ?></strong></div>
                 </div>
-            <?php endif; ?>
-            <div class="detail-item">
-                <div class="detail-label">Marka vozila</div>
-                <div class="detail-value"><?php echo e($vozilo['marka']); ?></div>
+                <?php if ($vozilo['sasija']): ?>
+                    <div class="detail-item">
+                        <div class="detail-label">Broj šasije (VIN)</div>
+                        <div class="detail-value"><?php echo htmlspecialchars($vozilo['sasija']); ?></div>
+                    </div>
+                <?php endif; ?>
+                <div class="detail-item">
+                    <div class="detail-label">Marka vozila</div>
+                    <div class="detail-value"><?php echo htmlspecialchars($vozilo['marka']); ?></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Slika vozila -->
-    <?php if ($vozilo['slika_vozila']): ?>
-        <div class="detail-section">
-            <h2>📷 Slika vozila</h2>
-            <img src="../../uploads/vozila/<?php echo e($vozilo['slika_vozila']); ?>"
-                 alt="Vozilo"
-                 class="vehicle-image-full">
-        </div>
-    <?php endif; ?>
-
-    <!-- Podaci o vlasniku -->
-    <div class="detail-section">
-        <h2>👤 Podaci o vlasniku</h2>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <div class="detail-label">Ime i prezime vlasnika</div>
-                <div class="detail-value"><?php echo e($vozilo['vlasnik']); ?></div>
+        <!-- Slika vozila -->
+        <?php if ($vozilo['slika_vozila']): ?>
+            <div class="detail-section">
+                <h2>📷 Slika vozila</h2>
+                <img src="../../uploads/vozila/<?php echo htmlspecialchars($vozilo['slika_vozila']); ?>"
+                     alt="Vozilo"
+                     class="vehicle-image-full">
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Kontakt telefon</div>
-                <div class="detail-value"><a href="tel:<?php echo e($vozilo['kontakt']); ?>"><?php echo e($vozilo['kontakt']); ?></a></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Datum i lokacija -->
-    <div class="detail-section">
-        <h2>📅 Datum i lokacija</h2>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <div class="detail-label">Datum prijema</div>
-                <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_prijema']); ?></div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Parking lokacija</div>
-                <div class="detail-value"><?php echo e($vozilo['parking_lokacija']); ?></div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Lokacija servisa</div>
-                <div class="detail-value"><?php echo e($vozilo['lokacija']); ?></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Usluge -->
-    <div class="detail-section">
-        <h2>🔧 Potrebne usluge</h2>
-        <?php if (empty($usluge_detalji)): ?>
-            <p style="color: #999;">Nema izabranih usluga.</p>
-        <?php else: ?>
-            <ul class="usluge-lista">
-                <?php foreach ($usluge_detalji as $usluga): ?>
-                    <li>
-                        <span class="usluga-naziv"><?php echo e($usluga['naziv']); ?></span>
-                        <span class="usluga-cena"><?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD</span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
         <?php endif; ?>
-    </div>
 
-    <!-- Cena -->
-    <div class="detail-section">
-        <h2>💰 Finansije</h2>
-        <div class="detail-item">
-            <div class="detail-label">Ukupna cena</div>
-            <div class="detail-value" style="font-size: 24px; color: #28a745; font-weight: bold;">
-                <?php echo number_format($vozilo['cena'], 2, ',', '.'); ?> RSD
-            </div>
-        </div>
-    </div>
-
-    <!-- Napomena -->
-    <?php if ($vozilo['napomena']): ?>
+        <!-- Podaci o vlasniku -->
         <div class="detail-section">
-            <h2>📝 Napomena</h2>
-            <div class="detail-value">
-                <?php echo nl2br(e($vozilo['napomena'])); ?>
+            <h2>👤 Podaci o vlasniku</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Ime i prezime vlasnika</div>
+                    <div class="detail-value"><?php echo htmlspecialchars($vozilo['vlasnik']); ?></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Kontakt telefon</div>
+                    <div class="detail-value"><a href="tel:<?php echo htmlspecialchars($vozilo['kontakt']); ?>"><?php echo htmlspecialchars($vozilo['kontakt']); ?></a></div>
+                </div>
             </div>
         </div>
-    <?php endif; ?>
 
-    <!-- Informacije o kreaciji -->
-    <div class="detail-section">
-        <h2>ℹ️ Informacije o kreaciji</h2>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <div class="detail-label">Kreirao korisnik</div>
-                <div class="detail-value"><?php echo e($vozilo['ime'] . ' ' . $vozilo['prezime']); ?> (<?php echo e($vozilo['korisnicko_ime']); ?>)</div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Datum kreiranja</div>
-                <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_kreiranja']); ?></div>
-            </div>
-            <div class="detail-item">
-                <div class="detail-label">Poslednja izmena</div>
-                <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_izmene']); ?></div>
+        <!-- Datum i lokacija -->
+        <div class="detail-section">
+            <h2>📅 Datum i lokacija</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Datum prijema</div>
+                    <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_prijema']); ?></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Parking lokacija</div>
+                    <div class="detail-value"><?php echo htmlspecialchars($vozilo['parking_lokacija']); ?></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Lokacija servisa</div>
+                    <div class="detail-value"><?php echo htmlspecialchars($vozilo['lokacija']); ?></div>
+                </div>
             </div>
         </div>
+
+        <!-- Usluge -->
+        <div class="detail-section">
+            <h2>🔧 Potrebne usluge</h2>
+            <?php if (empty($usluge_detalji)): ?>
+                <p style="color: #999;">Nema izabranih usluga.</p>
+            <?php else: ?>
+                <ul class="usluge-lista">
+                    <?php foreach ($usluge_detalji as $usluga): ?>
+                        <li>
+                            <span class="usluga-naziv"><?php echo htmlspecialchars($usluga['naziv']); ?></span>
+                            <span class="usluga-cena"><?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD</span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+
+        <!-- Cena -->
+        <div class="detail-section">
+            <h2>💰 Finansije</h2>
+            <div class="detail-item">
+                <div class="detail-label">Ukupna cena</div>
+                <div class="detail-value" style="font-size: 24px; color: #28a745; font-weight: bold;">
+                    <?php echo number_format($vozilo['cena'], 2, ',', '.'); ?> RSD
+                </div>
+            </div>
+        </div>
+
+        <!-- Napomena -->
+        <?php if ($vozilo['napomena']): ?>
+            <div class="detail-section">
+                <h2>📝 Napomena</h2>
+                <div class="detail-value">
+                    <?php echo nl2br(htmlspecialchars($vozilo['napomena'])); ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Informacije o kreaciji -->
+        <div class="detail-section">
+            <h2>ℹ️ Informacije o kreaciji</h2>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Kreirao korisnik</div>
+                    <div class="detail-value"><?php echo htmlspecialchars($vozilo['ime'] . ' ' . $vozilo['prezime']); ?> (<?php echo htmlspecialchars($vozilo['korisnicko_ime']); ?>)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Datum kreiranja</div>
+                    <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_kreiranja']); ?></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Poslednja izmena</div>
+                    <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_izmene']); ?></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-</div>
-</body>
-</html>
+<?php include '../../includes/footer.php'; ?>

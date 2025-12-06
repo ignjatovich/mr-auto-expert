@@ -7,8 +7,23 @@ require_once '../../includes/functions.php';
 // Svi tipovi korisnika mogu da dodaju vozila
 proveri_login();
 
+// Postavi promenljive za header
+$page_title = 'Dodaj vozilo - ' . SITE_NAME;
+$base_url = '../../';
+$include_camera_js = true;
+
 $greska = '';
 $uspeh = '';
+
+// Određivanje dostupnih lokacija za korisnika
+$dostupne_lokacije = [];
+if ($_SESSION['tip_korisnika'] == 'administrator' || $_SESSION['tip_korisnika'] == 'menadzer') {
+    // Admin i menadžer mogu da biraju sve lokacije
+    $dostupne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
+} else {
+    // Zaposleni mogu da biraju samo svoju lokaciju
+    $dostupne_lokacije = [$_SESSION['lokacija']];
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validacija
@@ -18,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $vlasnik = trim($_POST['vlasnik'] ?? '');
     $kontakt = trim($_POST['kontakt'] ?? '');
     $parking_lokacija = $_POST['parking_lokacija'] ?? '';
+    $lokacija_vozila = $_POST['lokacija_vozila'] ?? '';
     $usluge = $_POST['usluge'] ?? [];
     $cena = floatval($_POST['cena'] ?? 0);
     $napomena = trim($_POST['napomena'] ?? '');
@@ -27,8 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (empty($registracija) || empty($marka) || empty($vlasnik) || empty($kontakt) || empty($parking_lokacija)) {
         $greska = 'Molimo popunite sva obavezna polja.';
+    } elseif (empty($lokacija_vozila)) {
+        $greska = 'Molimo izaberite lokaciju vozila.';
     } elseif (empty($usluge)) {
         $greska = 'Molimo izaberite bar jednu uslugu.';
+    } elseif (!in_array($lokacija_vozila, $dostupne_lokacije)) {
+        // Provera da li je korisnik pokušao da izabere lokaciju koja mu nije dostupna
+        $greska = 'Nemate dozvolu da dodate vozilo na izabranu lokaciju.';
     } else {
         // Upload slike
         $slika_vozila = null;
@@ -68,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $cena,
                 $napomena,
                 $_SESSION['korisnik_id'],
-                $_SESSION['lokacija']
+                $lokacija_vozila,
             ]);
 
             $uspeh = 'Vozilo uspešno dodato!';
@@ -81,281 +102,300 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Preuzmi usluge za prikaz
 $usluge_lista = get_usluge();
+
+// Include header
+include '../../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="sr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dodaj vozilo - <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-<nav class="navbar">
-    <div class="nav-container">
-        <div class="nav-brand">
-            <a href="../../dashboard.php" style="color: inherit; text-decoration: none;">
-                🚗 Tehnički pregled
-            </a>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>➕ Dodaj novo vozilo</h1>
+            <a href="../../lista_vozila.php" class="btn btn-secondary">📋 Vidi sve poslove</a>
         </div>
-        <div class="nav-menu">
-                <span class="nav-user">
-                    <?php echo e($_SESSION['ime'] . ' ' . $_SESSION['prezime']); ?>
-                    <span class="badge badge-<?php echo $_SESSION['tip_korisnika']; ?>">
-                        <?php echo ucfirst($_SESSION['tip_korisnika']); ?>
-                    </span>
-                </span>
-            <a href="../../logout.php" class="btn btn-secondary btn-sm">Odjavi se</a>
-        </div>
-    </div>
-</nav>
 
-<div class="container">
-    <div class="page-header">
-        <h1>➕ Dodaj novo vozilo</h1>
-        <a href="../../lista_vozila.php" class="btn btn-secondary">📋 Vidi sve poslove</a>
-    </div>
+        <?php if ($greska): ?>
+            <div class="alert alert-error">
+                <?php echo htmlspecialchars($greska); ?>
+            </div>
+        <?php endif; ?>
 
-    <?php if ($greska): ?>
-        <div class="alert alert-error">
-            <?php echo e($greska); ?>
-        </div>
-    <?php endif; ?>
+        <?php if ($uspeh): ?>
+            <div class="alert alert-success">
+                <?php echo htmlspecialchars($uspeh); ?>
+                <a href="../../lista_vozila.php">Vidi listu vozila</a>
+            </div>
+        <?php endif; ?>
 
-    <?php if ($uspeh): ?>
-        <div class="alert alert-success">
-            <?php echo e($uspeh); ?>
-            <a href="../../lista_vozila.php">Vidi listu vozila</a>
-        </div>
-    <?php endif; ?>
+        <div class="form-card">
+            <form method="POST" enctype="multipart/form-data" id="forma-vozilo">
 
-    <div class="form-card">
-        <form method="POST" enctype="multipart/form-data" id="forma-vozilo">
+                <!-- IDENTIFIKACIJA VOZILA -->
+                <div class="form-section">
+                    <h2>🚗 Identifikacija vozila</h2>
 
-            <!-- IDENTIFIKACIJA VOZILA -->
-            <div class="form-section">
-                <h2>🚗 Identifikacija vozila</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registracija">Registarska oznaka *</label>
+                            <input
+                                    type="text"
+                                    id="registracija"
+                                    name="registracija"
+                                    required
+                                    placeholder="npr. BG-123-AB"
+                                    value="<?php echo htmlspecialchars($_POST['registracija'] ?? ''); ?>"
+                            >
+                        </div>
 
-                <div class="form-row">
+                        <div class="form-group">
+                            <label for="sasija">Broj šasije (VIN)</label>
+                            <input
+                                    type="text"
+                                    id="sasija"
+                                    name="sasija"
+                                    placeholder="npr. WBA12345678901234"
+                                    value="<?php echo htmlspecialchars($_POST['sasija'] ?? ''); ?>"
+                            >
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="registracija">Registarska oznaka *</label>
+                        <label for="marka">Marka vozila *</label>
                         <input
                                 type="text"
-                                id="registracija"
-                                name="registracija"
+                                id="marka"
+                                name="marka"
                                 required
-                                placeholder="npr. BG-123-AB"
-                                value="<?php echo e($_POST['registracija'] ?? ''); ?>"
+                                placeholder="npr. BMW X5"
+                                value="<?php echo htmlspecialchars($_POST['marka'] ?? ''); ?>"
+                        >
+                    </div>
+                </div>
+
+                <!-- VLASNIK -->
+                <div class="form-section">
+                    <h2>👤 Podaci o vlasniku</h2>
+
+                    <div class="form-group">
+                        <label for="vlasnik">Ime i prezime vlasnika *</label>
+                        <input
+                                type="text"
+                                id="vlasnik"
+                                name="vlasnik"
+                                required
+                                placeholder="npr. Marko Marković"
+                                value="<?php echo htmlspecialchars($_POST['vlasnik'] ?? ''); ?>"
                         >
                     </div>
 
                     <div class="form-group">
-                        <label for="sasija">Broj šasije (VIN)</label>
+                        <label for="kontakt">Kontakt telefon *</label>
                         <input
-                                type="text"
-                                id="sasija"
-                                name="sasija"
-                                placeholder="npr. WBA12345678901234"
-                                value="<?php echo e($_POST['sasija'] ?? ''); ?>"
+                                type="tel"
+                                id="kontakt"
+                                name="kontakt"
+                                required
+                                placeholder="npr. 061 123 4567"
+                                value="<?php echo htmlspecialchars($_POST['kontakt'] ?? ''); ?>"
                         >
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="marka">Marka vozila *</label>
-                    <input
-                            type="text"
-                            id="marka"
-                            name="marka"
-                            required
-                            placeholder="npr. BMW X5"
-                            value="<?php echo e($_POST['marka'] ?? ''); ?>"
-                    >
-                </div>
-            </div>
-
-            <!-- VLASNIK -->
-            <div class="form-section">
-                <h2>👤 Podaci o vlasniku</h2>
-
-                <div class="form-group">
-                    <label for="vlasnik">Ime i prezime vlasnika *</label>
-                    <input
-                            type="text"
-                            id="vlasnik"
-                            name="vlasnik"
-                            required
-                            placeholder="npr. Marko Marković"
-                            value="<?php echo e($_POST['vlasnik'] ?? ''); ?>"
-                    >
+                <!-- DATUM I VREME -->
+                <div class="form-section">
+                    <h2>📅 Datum i vreme prijema</h2>
+                    <div class="info-box">
+                        <strong>Automatski:</strong> <?php echo date('d.m.Y H:i'); ?>
+                        <br><small>Datum i vreme se automatski beleže prilikom dodavanja</small>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="kontakt">Kontakt telefon *</label>
-                    <input
-                            type="tel"
-                            id="kontakt"
-                            name="kontakt"
-                            required
-                            placeholder="npr. 061 123 4567"
-                            value="<?php echo e($_POST['kontakt'] ?? ''); ?>"
-                    >
-                </div>
-            </div>
+                <!-- SLIKA VOZILA - SA KAMEROM -->
+                <div class="form-section">
+                    <h2>📷 Slika vozila</h2>
 
-            <!-- DATUM I VREME -->
-            <div class="form-section">
-                <h2>📅 Datum i vreme prijema</h2>
-                <div class="info-box">
-                    <strong>Automatski:</strong> <?php echo date('d.m.Y H:i'); ?>
-                    <br><small>Datum i vreme se automatski beleže prilikom dodavanja</small>
-                </div>
-            </div>
+                    <input type="file" id="slika_vozila" name="slika_vozila" accept="image/*">
 
-            <!-- SLIKA VOZILA -->
-            <div class="form-section">
-                <h2>📷 Slika vozila</h2>
+                    <div class="upload-options">
+                        <button type="button" class="upload-btn" id="camera-btn">
+                            <span class="icon">📸</span>
+                            <span class="text">Uslikaj sada</span>
+                            <span class="subtext">Otvori kameru</span>
+                        </button>
 
-                <div class="form-group">
-                    <label for="slika_vozila">Upload slika (opciono)</label>
-                    <input
-                            type="file"
-                            id="slika_vozila"
-                            name="slika_vozila"
-                            accept="image/*"
-                            class="file-input"
-                    >
-                    <small>Max 5MB, formati: JPG, PNG, WEBP</small>
+                        <button type="button" class="upload-btn" id="upload-btn">
+                            <span class="icon">📁</span>
+                            <span class="text">Uploaduj sliku</span>
+                            <span class="subtext">Izaberi sa uređaja</span>
+                        </button>
+                    </div>
+
+                    <div id="slika-preview"></div>
                 </div>
 
-                <div id="slika-preview"></div>
-            </div>
+                <!-- LOKACIJA VOZILA -->
+                <div class="form-section">
+                    <h2>📍 Lokacija vozila</h2>
 
-            <!-- PARKING LOKACIJA -->
-            <div class="form-section">
-                <h2>🅿️ Parking lokacija</h2>
-
-                <div class="form-group">
-                    <label for="parking_lokacija">Gde je vozilo parkirano? *</label>
-                    <select id="parking_lokacija" name="parking_lokacija" required>
-                        <option value="">-- Izaberite --</option>
-                        <option value="Silos" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Silos') ? 'selected' : ''; ?>>Silos</option>
-                        <option value="Balon parking" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Balon parking') ? 'selected' : ''; ?>>Balon parking</option>
-                        <option value="Veliki parking" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Veliki parking') ? 'selected' : ''; ?>>Veliki parking</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- POTREBNE USLUGE -->
-            <div class="form-section">
-                <h2>🔧 Potrebne usluge</h2>
-
-                <?php if (empty($usluge_lista)): ?>
-                    <div class="alert alert-error">
-                        Nema dostupnih usluga. Molimo administratora da doda usluge.
-                        <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
-                            <br><a href="../usluge/dodaj.php">Dodaj prvu uslugu</a>
+                    <div class="form-group">
+                        <label for="lokacija_vozila">Na kojoj lokaciji se vrši tehnički pregled? *</label>
+                        <select id="lokacija_vozila" name="lokacija_vozila" required>
+                            <option value="">-- Izaberite lokaciju --</option>
+                            <?php foreach ($dostupne_lokacije as $lok): ?>
+                                <option value="<?php echo $lok; ?>" <?php echo (($_POST['lokacija_vozila'] ?? '') == $lok) ? 'selected' : ''; ?>>
+                                    <?php echo $lok; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if ($_SESSION['tip_korisnika'] == 'zaposleni'): ?>
+                            <small>Vi možete dodavati vozila samo na Vašoj lokaciji: <strong><?php echo $_SESSION['lokacija']; ?></strong></small>
+                        <?php else: ?>
+                            <small>Izaberite lokaciju na kojoj se nalazi vozilo</small>
                         <?php endif; ?>
                     </div>
-                <?php else: ?>
-                    <div class="checkbox-group">
-                        <?php
-                        $izabrane_usluge = $_POST['usluge'] ?? [];
-                        foreach ($usluge_lista as $id => $usluga):
-                            ?>
-                            <label class="checkbox-label">
-                                <input
-                                        type="checkbox"
-                                        name="usluge[]"
-                                        value="<?php echo $id; ?>"
-                                        data-cena="<?php echo $usluga['cena']; ?>"
-                                        class="usluga-checkbox"
-                                    <?php echo in_array($id, $izabrane_usluge) ? 'checked' : ''; ?>
-                                >
-                                <span>
-                                    <?php echo e($usluga['naziv']); ?>
+                </div>
+
+                <!-- PARKING LOKACIJA -->
+                <div class="form-section">
+                    <h2>🅿️ Parking lokacija</h2>
+
+                    <div class="form-group">
+                        <label for="parking_lokacija">Gde je vozilo parkirano? *</label>
+                        <select id="parking_lokacija" name="parking_lokacija" required>
+                            <option value="">-- Izaberite --</option>
+                            <option value="Silos" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Silos') ? 'selected' : ''; ?>>Silos</option>
+                            <option value="Balon parking" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Balon parking') ? 'selected' : ''; ?>>Balon parking</option>
+                            <option value="Veliki parking" <?php echo (($_POST['parking_lokacija'] ?? '') == 'Veliki parking') ? 'selected' : ''; ?>>Veliki parking</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- POTREBNE USLUGE -->
+                <div class="form-section">
+                    <h2>🔧 Potrebne usluge</h2>
+
+                    <?php if (empty($usluge_lista)): ?>
+                        <div class="alert alert-error">
+                            Nema dostupnih usluga. Molimo administratora da doda usluge.
+                            <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
+                                <br><a href="../usluge/dodaj.php">Dodaj prvu uslugu</a>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="checkbox-group">
+                            <?php
+                            $izabrane_usluge = $_POST['usluge'] ?? [];
+                            foreach ($usluge_lista as $id => $usluga):
+                                ?>
+                                <label class="checkbox-label">
+                                    <input
+                                            type="checkbox"
+                                            name="usluge[]"
+                                            value="<?php echo $id; ?>"
+                                            data-cena="<?php echo $usluga['cena']; ?>"
+                                            class="usluga-checkbox"
+                                        <?php echo in_array($id, $izabrane_usluge) ? 'checked' : ''; ?>
+                                    >
+                                    <span>
+                                    <?php echo htmlspecialchars($usluga['naziv']); ?>
                                     <strong style="color: #667eea;">(<?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD)</strong>
                                 </span>
-                            </label>
-                        <?php endforeach; ?>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- CENA -->
+                <div class="form-section">
+                    <h2>💰 Cena</h2>
+
+                    <div class="form-group">
+                        <label for="cena">Ukupna cena (RSD)</label>
+                        <input
+                                type="number"
+                                id="cena"
+                                name="cena"
+                                step="0.01"
+                                min="0"
+                                placeholder="0.00"
+                                value="<?php echo htmlspecialchars($_POST['cena'] ?? '0'); ?>"
+                                readonly
+                                style="background: #f8f9fa; font-size: 20px; font-weight: bold; color: #28a745;"
+                        >
+                        <small>Cena se automatski izračunava na osnovu izabranih usluga</small>
                     </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- CENA -->
-            <div class="form-section">
-                <h2>💰 Cena</h2>
-
-                <div class="form-group">
-                    <label for="cena">Ukupna cena (RSD)</label>
-                    <input
-                            type="number"
-                            id="cena"
-                            name="cena"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            value="<?php echo e($_POST['cena'] ?? '0'); ?>"
-                            readonly
-                            style="background: #f8f9fa; font-size: 20px; font-weight: bold; color: #28a745;"
-                    >
-                    <small>Cena se automatski izračunava na osnovu izabranih usluga</small>
                 </div>
-            </div>
 
-            <!-- NAPOMENA -->
-            <div class="form-section">
-                <h2>📝 Napomena</h2>
+                <!-- NAPOMENA -->
+                <div class="form-section">
+                    <h2>📝 Napomena</h2>
 
-                <div class="form-group">
-                    <label for="napomena">Dodatne napomene (opciono)</label>
-                    <textarea
-                            id="napomena"
-                            name="napomena"
-                            rows="4"
-                            placeholder="Unesite bilo kakve dodatne informacije..."
-                    ><?php echo e($_POST['napomena'] ?? ''); ?></textarea>
+                    <div class="form-group">
+                        <label for="napomena">Dodatne napomene (opciono)</label>
+                        <textarea
+                                id="napomena"
+                                name="napomena"
+                                rows="4"
+                                placeholder="Unesite bilo kakve dodatne informacije..."
+                        ><?php echo htmlspecialchars($_POST['napomena'] ?? ''); ?></textarea>
+                    </div>
                 </div>
-            </div>
 
-            <!-- DUGMAD -->
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    ✅ Dodaj vozilo
-                </button>
-                <a href="../../dashboard.php" class="btn btn-secondary btn-lg">
-                    ❌ Otkaži
-                </a>
-            </div>
+                <!-- DUGMAD -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        ✅ Dodaj vozilo
+                    </button>
+                    <a href="../../dashboard.php" class="btn btn-secondary btn-lg">
+                        ❌ Otkaži
+                    </a>
+                </div>
 
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-<script src="../../assets/js/main.js"></script>
-<script>
-    // Automatski račun cene
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('.usluga-checkbox');
-        const cenaInput = document.getElementById('cena');
+    <!-- KAMERA MODAL -->
+    <div id="camera-modal" class="camera-modal">
+        <div class="camera-container">
+            <button id="close-camera">×</button>
+            <div class="camera-info">📸 Pozicionirajte vozilo i kliknite na dugme</div>
+            <video id="camera-video" class="camera-video" autoplay playsinline></video>
+            <canvas id="camera-canvas" class="camera-canvas"></canvas>
+            <div class="camera-controls">
+                <button type="button" id="switch-camera-btn" class="camera-btn">
+                    🔄
+                </button>
+                <button type="button" id="capture-btn" class="camera-btn">
+                    📸
+                </button>
+            </div>
+        </div>
+    </div>
 
-        function updateCena() {
-            let ukupno = 0;
+    <script>
+        // Automatski račun cene
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.usluga-checkbox');
+            const cenaInput = document.getElementById('cena');
+
+            function updateCena() {
+                let ukupno = 0;
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        ukupno += parseFloat(cb.dataset.cena);
+                    }
+                });
+                cenaInput.value = ukupno.toFixed(2);
+            }
+
             checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    ukupno += parseFloat(cb.dataset.cena);
-                }
+                cb.addEventListener('change', updateCena);
             });
-            cenaInput.value = ukupno.toFixed(2);
-        }
 
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateCena);
+            // Inicijalno izračunaj cenu
+            updateCena();
         });
+    </script>
 
-        // Inicijalno izračunaj cenu
-        updateCena();
-    });
-</script>
-</body>
-</html>
+<?php include '../../includes/footer.php'; ?>
