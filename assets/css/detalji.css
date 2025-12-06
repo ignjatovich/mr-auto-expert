@@ -1,0 +1,164 @@
+.detail-section {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.detail-section h2 {
+    color: #FF411C;
+    font-size: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e1e8ed;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.detail-item {
+    margin-bottom: 15px;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 16px;
+    color: #333;
+}
+
+.vehicle-image-full {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.status-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border: 2px solid #e1e8ed;
+}
+
+.status-current {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.status-current.u_radu {
+    background: #dc3545;
+    color: white;
+}
+
+.status-current.zavrseno {
+    background: #ffc107;
+    color: #333;
+}
+
+.status-current.placeno {
+    background: #28a745;
+    color: white;
+}
+
+.status-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-status {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-status-u-radu {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-status-u-radu:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-status-zavrseno {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-status-zavrseno:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+.btn-status-placeno {
+    background: #28a745;
+    color: white;
+}
+
+.btn-status-placeno:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.usluge-lista {
+    list-style: none;
+    padding: 0;
+}
+
+.usluge-lista li {
+    padding: 15px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usluge-lista li .usluga-naziv:before {
+    content: "✓ ";
+    color: #28a745;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.usluge-lista li .usluga-cena {
+    color: #667eea;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .detail-section {
+        padding: 20px;
+    }
+
+    .status-buttons {
+        flex-direction: column;
+    }
+
+    .btn-status {
+        width: 100%;
+    }
+}

@@ -1,186 +1,174 @@
-// ============================================
-// KAMERA I UPLOAD SLIKA
-// ============================================
+// Camera functionality za snimanje slika vozila
+let stream = null;
+let videoElement = null;
+let canvasElement = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Elementi
-    const slikaInput = document.getElementById('slika_vozila');
-    const slikaPreview = document.getElementById('slika-preview');
-    const cameraBtn = document.getElementById('camera-btn');
-    const uploadBtn = document.getElementById('upload-btn');
-    const cameraModal = document.getElementById('camera-modal');
-    const cameraVideo = document.getElementById('camera-video');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const captureBtn = document.getElementById('capture-btn');
-    const closeCameraBtn = document.getElementById('close-camera');
-    const switchCameraBtn = document.getElementById('switch-camera');
+// Otvori kameru
+function openCamera() {
+    const modal = document.getElementById('camera-modal');
+    videoElement = document.getElementById('camera-video');
+    canvasElement = document.getElementById('camera-canvas');
 
-    let stream = null;
-    let currentFacingMode = 'environment'; // 'environment' = zadnja kamera, 'user' = prednja
+    // Prikaži modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 
-    // ============================================
-    // UPLOAD SLIKE - Postojeća funkcionalnost
-    // ============================================
-    if (slikaInput && slikaPreview) {
-        slikaInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                displayImagePreview(file);
-            }
-        });
+    // Pokreni kameru
+    startCamera();
+}
+
+// Zatvori kameru
+function closeCamera() {
+    const modal = document.getElementById('camera-modal');
+
+    // Zaustavi stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
     }
 
-    // ============================================
-    // OTVORI KAMERU
-    // ============================================
-    if (cameraBtn) {
-        cameraBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            openCamera();
-        });
-    }
+    // Sakrij modal
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
 
-    // ============================================
-    // UPLOADUJ SLIKU - Klik na dugme
-    // ============================================
-    if (uploadBtn && slikaInput) {
-        uploadBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            slikaInput.click();
-        });
-    }
-
-    // ============================================
-    // ZATVORI KAMERU
-    // ============================================
-    if (closeCameraBtn) {
-        closeCameraBtn.addEventListener('click', function() {
-            closeCamera();
-        });
-    }
-
-    // ============================================
-    // PROMENI KAMERU (prednja/zadnja)
-    // ============================================
-    if (switchCameraBtn) {
-        switchCameraBtn.addEventListener('click', function() {
-            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-
-            // Zatvori trenutni stream i otvori novi sa drugom kamerom
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-            startCamera();
-        });
-    }
-
-    // ============================================
-    // USLIKAJ
-    // ============================================
-    if (captureBtn) {
-        captureBtn.addEventListener('click', function() {
-            capturePhoto();
-        });
-    }
-
-    // ============================================
-    // FUNKCIJE
-    // ============================================
-
-    function openCamera() {
-        if (cameraModal) {
-            cameraModal.style.display = 'flex';
-            startCamera();
-        }
-    }
-
-    function closeCamera() {
-        if (cameraModal) {
-            cameraModal.style.display = 'none';
-        }
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-    }
-
-    function startCamera() {
+// Pokreni kameru
+async function startCamera() {
+    try {
+        // Prioritet za zadnju kameru (environment) na mobilnim uređajima
         const constraints = {
             video: {
-                facingMode: currentFacingMode,
+                facingMode: 'environment', // Zadnja kamera
                 width: { ideal: 1920 },
                 height: { ideal: 1080 }
             }
         };
 
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(mediaStream) {
-                stream = mediaStream;
-                cameraVideo.srcObject = stream;
-                cameraVideo.play();
-            })
-            .catch(function(error) {
-                console.error('Greška pri pristupu kameri:', error);
-                alert('Ne mogu da pristupim kameri. Molimo proverite dozvole u podešavanjima.');
-                closeCamera();
-            });
-    }
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = stream;
+        videoElement.play();
 
-    function capturePhoto() {
-        if (!cameraVideo || !cameraCanvas) return;
+    } catch (error) {
+        console.error('Greška pri pokretanju kamere:', error);
 
-        // Postavi dimenzije canvas-a
-        cameraCanvas.width = cameraVideo.videoWidth;
-        cameraCanvas.height = cameraVideo.videoHeight;
-
-        // Nacrtaj trenutni frame iz videa na canvas
-        const context = cameraCanvas.getContext('2d');
-        context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
-
-        // Konvertuj canvas u Blob
-        cameraCanvas.toBlob(function(blob) {
-            // Kreiraj File objekat
-            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
-
-            // Kreiraj DataTransfer objekat da dodamo fajl u input
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            slikaInput.files = dataTransfer.files;
-
-            // Prikaži preview
-            displayImagePreview(file);
-
-            // Zatvori kameru
+        // Pokušaj sa osnovnim constraintima ako environment ne radi
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            videoElement.play();
+        } catch (err) {
+            alert('Ne mogu pristupiti kameri. Molimo proverite dozvole.');
             closeCamera();
-        }, 'image/jpeg', 0.95);
+        }
+    }
+}
+
+// Uslikaj fotografiju
+function capturePhoto() {
+    if (!videoElement || !canvasElement) {
+        alert('Kamera nije pokrenuta!');
+        return;
     }
 
-    function displayImagePreview(file) {
-        const reader = new FileReader();
+    // Postavi dimenzije canvas-a
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
 
+    // Crtaj video frame na canvas
+    const context = canvasElement.getContext('2d');
+    context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+    // Konvertuj canvas u blob
+    canvasElement.toBlob(blob => {
+        if (!blob) {
+            alert('Greška pri kreiranju slike!');
+            return;
+        }
+
+        // Kreiraj File objekat
+        const file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
+
+        // Postavi u file input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById('slika_vozila').files = dataTransfer.files;
+
+        // Prikaži preview
+        const reader = new FileReader();
         reader.onload = function(e) {
-            slikaPreview.innerHTML = `
-                <div style="margin-top: 15px; position: relative;">
+            const preview = document.getElementById('slika-preview');
+            preview.innerHTML = `
+                <div style="margin-top: 15px;">
+                    <p style="color: #28a745; font-weight: 600; margin-bottom: 10px;">
+                        ✅ Slika snimljena uspešno!
+                    </p>
                     <img src="${e.target.result}" 
                          alt="Preview" 
                          style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <button type="button" onclick="removeImage()" 
-                            style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 18px; line-height: 1;">
-                        ×
+                    <button type="button" onclick="removePhoto()" class="btn btn-secondary" style="margin-top: 10px;">
+                        🗑️ Ukloni sliku
                     </button>
-                    <div style="margin-top: 10px; color: #28a745; font-size: 14px;">
-                        ✓ Slika je spremna za upload
-                    </div>
                 </div>
             `;
         };
-
         reader.readAsDataURL(file);
-    }
 
-    // Globalna funkcija za uklanjanje slike
-    window.removeImage = function() {
-        slikaPreview.innerHTML = '';
-        slikaInput.value = '';
-    };
+        // Zatvori kameru
+        closeCamera();
+
+    }, 'image/jpeg', 0.95);
+}
+
+// Ukloni fotografiju
+function removePhoto() {
+    document.getElementById('slika_vozila').value = '';
+    document.getElementById('slika-preview').innerHTML = '';
+}
+
+// Preview slike sa file input-a
+document.addEventListener('DOMContentLoaded', function() {
+    const slikaInput = document.getElementById('slika_vozila');
+    const slikaPreview = document.getElementById('slika-preview');
+
+    if (slikaInput && slikaPreview) {
+        slikaInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    slikaPreview.innerHTML = `
+                        <div style="margin-top: 15px;">
+                            <p style="color: #28a745; font-weight: 600; margin-bottom: 10px;">
+                                ✅ Slika odabrana uspešno!
+                            </p>
+                            <img src="${e.target.result}" 
+                                 alt="Preview" 
+                                 style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <button type="button" onclick="removePhoto()" class="btn btn-secondary" style="margin-top: 10px;">
+                                🗑️ Ukloni sliku
+                            </button>
+                        </div>
+                    `;
+                };
+
+                reader.readAsDataURL(file);
+            } else {
+                slikaPreview.innerHTML = '';
+            }
+        });
+    }
+});
+
+// Zatvori modal klikom na overlay
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('camera-modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeCamera();
+            }
+        });
+    }
 });

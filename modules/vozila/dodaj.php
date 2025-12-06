@@ -59,14 +59,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $cena = floatval($_POST['cena'] ?? 0);
     $napomena = trim($_POST['napomena'] ?? '');
 
+    // Custom usluge - više custom usluga
+    $custom_usluge = [];
+    if (isset($_POST['custom_naziv']) && is_array($_POST['custom_naziv'])) {
+        foreach ($_POST['custom_naziv'] as $index => $naziv) {
+            $naziv = trim($naziv);
+            $custom_cena = floatval($_POST['custom_cena'][$index] ?? 0);
+
+            if (!empty($naziv) && $custom_cena > 0) {
+                $custom_usluge[] = [
+                    'naziv' => $naziv,
+                    'cena' => $custom_cena
+                ];
+                $cena += $custom_cena;
+            }
+        }
+    }
+
     // Datum prijema - automatski trenutno vreme
     $datum_prijema = date('Y-m-d H:i:s');
 
     if (empty($greska)) {
-        if (empty($registracija) || empty($marka) || empty($kontakt) || empty($parking_lokacija)) {
+        if (empty($registracija) || empty($marka) || empty($parking_lokacija)) {
             $greska = 'Molimo popunite sva obavezna polja.';
-        } elseif (empty($usluge)) {
-            $greska = 'Molimo izaberite bar jednu uslugu.';
+        } elseif (empty($usluge) && empty($custom_usluga_naziv)) {
+            $greska = 'Molimo izaberite bar jednu uslugu ili unesite custom uslugu.';
         } else {
             // Upload slike
             $slika_vozila = null;
@@ -83,14 +100,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Konvertuj usluge u JSON
                 $usluge_json = json_encode($usluge);
 
+                // Custom usluge u JSON
+                $custom_usluge_json = !empty($custom_usluge) ? json_encode($custom_usluge) : null;
+
                 // Insert u bazu - AŽURIRANO SA NOVIM POLJIMA
                 $stmt = $conn->prepare("
                     INSERT INTO vozila (
-                        registracija, sasija, marka, vlasnik, tip_klijenta, pravno_lice_id, kontakt, 
+                        registracija, sasija, marka, vlasnik, tip_klijenta, pravno_lice_id, kontakt_osoba, kontakt, 
                         datum_prijema, slika_vozila, parking_lokacija, 
-                        usluge, cena, napomena, 
+                        usluge, custom_usluge, cena, napomena, 
                         kreirao_korisnik_id, lokacija, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'u_radu')
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'u_radu')
                 ");
 
                 $stmt->execute([
@@ -100,11 +120,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $vlasnik,
                     $tip_klijenta,
                     $pravno_lice_id,
+                    $kontakt_osoba,
                     $kontakt,
                     $datum_prijema,
                     $slika_vozila,
                     $parking_lokacija,
                     $usluge_json,
+                    $custom_usluge_json,
                     $cena,
                     $napomena,
                     $_SESSION['korisnik_id'],
@@ -126,6 +148,8 @@ $usluge_lista = get_usluge();
 // Include header
 include '../../includes/header.php';
 ?>
+    <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/pravna_lica_styles.css">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/camera.css">
 
     <div class="container">
         <div class="page-header">
@@ -270,12 +294,11 @@ include '../../includes/header.php';
                     <h2>📞 Kontakt</h2>
 
                     <div class="form-group">
-                        <label for="kontakt">Kontakt telefon *</label>
+                        <label for="kontakt">Kontakt telefon</label>
                         <input
                                 type="tel"
                                 id="kontakt"
                                 name="kontakt"
-                                required
                                 placeholder="npr. 061 123 4567"
                                 value="<?php echo htmlspecialchars($_POST['kontakt'] ?? ''); ?>"
                         >
@@ -381,6 +404,45 @@ include '../../includes/header.php';
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+                </div>
+
+                <!-- CUSTOM USLUGE -->
+                <div class="form-section">
+                    <h2>➕ Dodatne usluge (custom)</h2>
+                    <p style="color: #666; margin-bottom: 15px;">Dodaj specifične usluge za ovo vozilo</p>
+
+                    <div id="custom-usluge-container" class="custom-usluge-container">
+                        <!-- Prva custom usluga (uvek prikazana) -->
+                        <div class="custom-usluga-item">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Naziv usluge</label>
+                                <input
+                                        type="text"
+                                        name="custom_naziv[]"
+                                        placeholder="npr. Popravka haube"
+                                        class="custom-usluga-input"
+                                >
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Cena (RSD)</label>
+                                <input
+                                        type="number"
+                                        name="custom_cena[]"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0.00"
+                                        class="custom-cena-input"
+                                >
+                            </div>
+
+                            <button type="button" onclick="removeCustomUsluga(this)" class="btn-remove-usluga" style="visibility: hidden;">✕</button>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addCustomUsluga()" class="btn-add-custom">
+                        ➕ Dodaj još jednu custom uslugu
+                    </button>
                 </div>
 
                 <!-- CENA -->
@@ -618,7 +680,7 @@ include '../../includes/header.php';
             }
 
             searchTimeout = setTimeout(() => {
-                fetch(`search_api.php?q=${encodeURIComponent(query)}`)
+                fetch(`../../modules/pravna_lica/search_api.php?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
                     .then(data => {
                         displayResults(data);
@@ -698,11 +760,22 @@ include '../../includes/header.php';
 
             function updateCena() {
                 let ukupno = 0;
+
+                // Standardne usluge
                 checkboxes.forEach(cb => {
                     if (cb.checked) {
                         ukupno += parseFloat(cb.dataset.cena);
                     }
                 });
+
+                // Custom usluge
+                const customCenaInputs = document.querySelectorAll('.custom-cena-input');
+                customCenaInputs.forEach(input => {
+                    if (input.value) {
+                        ukupno += parseFloat(input.value) || 0;
+                    }
+                });
+
                 cenaInput.value = ukupno.toFixed(2);
             }
 
@@ -710,9 +783,61 @@ include '../../includes/header.php';
                 cb.addEventListener('change', updateCena);
             });
 
+            // Event delegation za custom cene
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('custom-cena-input')) {
+                    updateCena();
+                }
+            });
+
             // Inicijalno izračunaj cenu
             updateCena();
         });
+
+        // Dodaj novu custom uslugu
+        function addCustomUsluga() {
+            const container = document.getElementById('custom-usluge-container');
+
+            const newItem = document.createElement('div');
+            newItem.className = 'custom-usluga-item';
+            newItem.innerHTML = `
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Naziv usluge</label>
+            <input
+                type="text"
+                name="custom_naziv[]"
+                placeholder="npr. Popravka haube"
+                class="custom-usluga-input"
+            >
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+            <label>Cena (RSD)</label>
+            <input
+                type="number"
+                name="custom_cena[]"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                class="custom-cena-input"
+            >
+        </div>
+
+        <button type="button" onclick="removeCustomUsluga(this)" class="btn-remove-usluga">✕</button>
+    `;
+
+            container.appendChild(newItem);
+        }
+
+        // Ukloni custom uslugu
+        function removeCustomUsluga(btn) {
+            const item = btn.closest('.custom-usluga-item');
+            item.remove();
+
+            // Ažuriraj cenu
+            const event = new Event('input', { bubbles: true });
+            document.dispatchEvent(event);
+        }
     </script>
 
 <?php include '../../includes/footer.php'; ?>

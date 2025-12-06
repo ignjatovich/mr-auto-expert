@@ -56,51 +56,52 @@ include '../../includes/header.php';
     </style>
 
     <div class="container">
-        <div class="page-header">
-            <h1>🏢 Pravna lica</h1>
-            <a href="dodaj.php" class="btn btn-primary">➕ Dodaj pravno lice</a>
+    <div class="page-header">
+        <h1>🏢 Pravna lica</h1>
+        <a href="dodaj.php" class="btn btn-primary">➕ Dodaj pravno lice</a>
+    </div>
+
+    <?php if ($greska): ?>
+        <div class="alert alert-error">
+            <?php echo htmlspecialchars($greska); ?>
         </div>
+    <?php endif; ?>
 
-        <?php if ($greska): ?>
-            <div class="alert alert-error">
-                <?php echo htmlspecialchars($greska); ?>
-            </div>
-        <?php endif; ?>
+    <?php if ($uspeh): ?>
+        <div class="alert alert-success">
+            <?php echo htmlspecialchars($uspeh); ?>
+        </div>
+    <?php endif; ?>
 
-        <?php if ($uspeh): ?>
-            <div class="alert alert-success">
-                <?php echo htmlspecialchars($uspeh); ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Pretraga -->
-        <div class="filter-section">
-            <form method="GET" action="">
-                <div class="filter-grid">
-                    <div class="form-group">
-                        <label for="pretraga">🔍 Pretraga</label>
-                        <input
-                            type="text"
-                            name="pretraga"
-                            id="pretraga"
-                            placeholder="Naziv, PIB, telefon, email..."
-                            value="<?php echo htmlspecialchars($pretraga); ?>"
-                        >
-                    </div>
-
-                    <div class="form-group" style="display: flex; align-items: flex-end; gap: 10px;">
-                        <button type="submit" class="btn btn-primary">🔍 Pretraži</button>
-                        <a href="lista.php" class="btn btn-secondary">❌ Očisti</a>
-                    </div>
+    <!-- Pretraga -->
+    <div class="filter-section">
+        <form method="GET" action="">
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label for="pretraga">🔍 Pretraga</label>
+                    <input
+                        type="text"
+                        name="pretraga"
+                        id="pretraga"
+                        placeholder="Naziv, PIB, telefon, email..."
+                        value="<?php echo htmlspecialchars($pretraga); ?>"
+                    >
                 </div>
-            </form>
-        </div>
 
-        <!-- Tabela -->
-        <div class="scroll-hint">
-            ← Pomerajte tabelu levo/desno da vidite sve kolone →
-        </div>
+                <div class="form-group" style="display: flex; align-items: flex-end; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">🔍 Pretraži</button>
+                    <a href="lista.php" class="btn btn-secondary">❌ Očisti</a>
+                </div>
+            </div>
+        </form>
+    </div>
 
+    <!-- Scroll hint -->
+    <div class="scroll-hint">
+        ← Pomerajte tabelu levo/desno da vidite sve kolone →
+    </div>
+
+    <div class="table-container">
         <div class="table-wrapper">
             <?php if (empty($pravna_lica)): ?>
                 <div class="empty-state">

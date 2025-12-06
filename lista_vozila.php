@@ -176,89 +176,91 @@ include 'includes/header.php';
         </div>
 
         <!-- Tabela -->
-        <div class="table-wrapper">
-            <?php if (empty($vozila)): ?>
-                <div class="empty-state">
-                    <h3>🚗 Nema vozila</h3>
-                    <p>Trenutno nema vozila koja odgovaraju vašim filterima.</p>
-                    <a href="modules/vozila/dodaj.php" class="btn btn-primary" style="margin-top: 20px;">➕ Dodaj prvo vozilo</a>
-                </div>
-            <?php else: ?>
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Slika</th>
-                        <th>Registracija</th>
-                        <th>Marka</th>
-                        <th>Tip klijenta</th>
-                        <th>Vlasnik/Firma</th>
-                        <th>Kontakt</th>
-                        <th>Datum prijema</th>
-                        <th>Lokacija</th>
-                        <th>Status</th>
-                        <th>Kreirao</th>
-                        <th>Akcije</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($vozila as $vozilo): ?>
+        <div class="table-container">
+            <div class="table-wrapper">
+                <?php if (empty($vozila)): ?>
+                    <div class="empty-state">
+                        <h3>🚗 Nema vozila</h3>
+                        <p>Trenutno nema vozila koja odgovaraju vašim filterima.</p>
+                        <a href="modules/vozila/dodaj.php" class="btn btn-primary" style="margin-top: 20px;">➕ Dodaj prvo vozilo</a>
+                    </div>
+                <?php else: ?>
+                    <table>
+                        <thead>
                         <tr>
-                            <td>
-                                <?php if ($vozilo['slika_vozila']): ?>
-                                    <img src="uploads/vozila/<?php echo htmlspecialchars($vozilo['slika_vozila']); ?>"
-                                         alt="Vozilo"
-                                         class="vehicle-image">
-                                <?php else: ?>
-                                    <div class="no-image">🚗</div>
-                                <?php endif; ?>
-                            </td>
-                            <td><strong><?php echo htmlspecialchars($vozilo['registracija']); ?></strong></td>
-                            <td><?php echo htmlspecialchars($vozilo['marka']); ?></td>
-                            <td>
-                                <?php if ($vozilo['tip_klijenta'] == 'pravno'): ?>
-                                    <span style="color: #FF411C; font-weight: 600;">🏢 Pravno</span>
-                                <?php else: ?>
-                                    <span style="color: #666;">👤 Fizičko</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php
-                                if ($vozilo['tip_klijenta'] == 'pravno' && $vozilo['pravno_lice_naziv']) {
-                                    echo '<strong>' . htmlspecialchars($vozilo['pravno_lice_naziv']) . '</strong>';
-                                } else {
-                                    echo htmlspecialchars($vozilo['vlasnik']);
-                                }
-                                ?>
-                            </td>
-                            <td><?php echo htmlspecialchars($vozilo['kontakt']); ?></td>
-                            <td><?php echo formatuj_datum($vozilo['datum_prijema']); ?></td>
-                            <td><?php echo htmlspecialchars($vozilo['lokacija']); ?></td>
-                            <td>
+                            <th>Slika</th>
+                            <th>Registracija</th>
+                            <th>Marka</th>
+                            <th>Tip klijenta</th>
+                            <th>Vlasnik/Firma</th>
+                            <th>Kontakt</th>
+                            <th>Datum prijema</th>
+                            <th>Lokacija</th>
+                            <th>Status</th>
+                            <th>Kreirao</th>
+                            <th>Akcije</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($vozila as $vozilo): ?>
+                            <tr>
+                                <td>
+                                    <?php if ($vozilo['slika_vozila']): ?>
+                                        <img src="uploads/vozila/<?php echo htmlspecialchars($vozilo['slika_vozila']); ?>"
+                                             alt="Vozilo"
+                                             class="vehicle-image">
+                                    <?php else: ?>
+                                        <div class="no-image">🚗</div>
+                                    <?php endif; ?>
+                                </td>
+                                <td><strong><?php echo htmlspecialchars($vozilo['registracija']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($vozilo['marka']); ?></td>
+                                <td>
+                                    <?php if ($vozilo['tip_klijenta'] == 'pravno'): ?>
+                                        <span style="color: #FF411C; font-weight: 600;">🏢 Pravno</span>
+                                    <?php else: ?>
+                                        <span style="color: #666;">👤 Fizičko</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    if ($vozilo['tip_klijenta'] == 'pravno' && $vozilo['pravno_lice_naziv']) {
+                                        echo '<strong>' . htmlspecialchars($vozilo['pravno_lice_naziv']) . '</strong>';
+                                    } else {
+                                        echo htmlspecialchars($vozilo['vlasnik']);
+                                    }
+                                    ?>
+                                </td>
+                                <td><?php echo htmlspecialchars($vozilo['kontakt']); ?></td>
+                                <td><?php echo formatuj_datum($vozilo['datum_prijema']); ?></td>
+                                <td><?php echo htmlspecialchars($vozilo['lokacija']); ?></td>
+                                <td>
                             <span class="status-badge status-<?php echo $vozilo['status']; ?>">
                                 <?php echo get_status_text($vozilo['status']); ?>
                             </span>
-                            </td>
-                            <td><?php echo htmlspecialchars($vozilo['ime'] . ' ' . $vozilo['prezime']); ?></td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="modules/vozila/detalji.php?id=<?php echo $vozilo['id']; ?>"
-                                       class="btn-action btn-view">
-                                        👁️ Vidi
-                                    </a>
-                                    <?php if ($tip == 'administrator' || $tip == 'menadzer'): ?>
-                                        <button onclick="obrisiVozilo(<?php echo $vozilo['id']; ?>, '<?php echo htmlspecialchars($vozilo['registracija'], ENT_QUOTES); ?>')"
-                                                class="btn-action btn-delete">
-                                            🗑️ Obriši
-                                        </button>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-        </div>
+                                </td>
+                                <td><?php echo htmlspecialchars($vozilo['ime'] . ' ' . $vozilo['prezime']); ?></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="modules/vozila/detalji.php?id=<?php echo $vozilo['id']; ?>"
+                                           class="btn-action btn-view">
+                                            👁️ Vidi
+                                        </a>
+                                        <?php if ($tip == 'administrator' || $tip == 'menadzer'): ?>
+                                            <button onclick="obrisiVozilo(<?php echo $vozilo['id']; ?>, '<?php echo htmlspecialchars($vozilo['registracija'], ENT_QUOTES); ?>')"
+                                                    class="btn-action btn-delete">
+                                                🗑️ Obriši
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div><!-- .table-wrapper -->
+        </div><!-- .table-container -->
 
         <?php if (!empty($vozila)): ?>
             <div class="table-info">
