@@ -15,25 +15,46 @@ $include_camera_js = true;
 $greska = '';
 $uspeh = '';
 
-// Određivanje dostupnih lokacija za korisnika
-$dostupne_lokacije = [];
-if ($_SESSION['tip_korisnika'] == 'administrator' || $_SESSION['tip_korisnika'] == 'menadzer') {
-    // Admin i menadžer mogu da biraju sve lokacije
-    $dostupne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
-} else {
-    // Zaposleni mogu da biraju samo svoju lokaciju
-    $dostupne_lokacije = [$_SESSION['lokacija']];
-}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validacija
     $registracija = trim($_POST['registracija'] ?? '');
     $sasija = trim($_POST['sasija'] ?? '');
     $marka = trim($_POST['marka'] ?? '');
-    $vlasnik = trim($_POST['vlasnik'] ?? '');
+
+    // TIP KLIJENTA - NOVO
+    $tip_klijenta = $_POST['tip_klijenta'] ?? 'fizicko';
+    $pravno_lice_id = null;
+    $vlasnik = '';
+
+    if ($tip_klijenta == 'pravno') {
+        $pravno_lice_id = intval($_POST['pravno_lice_id'] ?? 0);
+        $kontakt_osoba = trim($_POST['kontakt_osoba'] ?? '');
+
+        if (empty($pravno_lice_id)) {
+            $greska = 'Molimo izaberite pravno lice.';
+        } else {
+            // Proveri da li pravno lice postoji
+            $stmt = $conn->prepare("SELECT naziv FROM pravna_lica WHERE id = ?");
+            $stmt->execute([$pravno_lice_id]);
+            $firma = $stmt->fetch();
+
+            if (!$firma) {
+                $greska = 'Izabrano pravno lice ne postoji!';
+            } else {
+                // Vlasnik je naziv firme, kontakt osoba ide u napomenu
+                $vlasnik = $firma['naziv'];
+            }
+        }
+    } else {
+        // Fizičko lice
+        $vlasnik = trim($_POST['vlasnik'] ?? '');
+        if (empty($vlasnik)) {
+            $greska = 'Molimo unesite ime i prezime vlasnika.';
+        }
+    }
+
     $kontakt = trim($_POST['kontakt'] ?? '');
     $parking_lokacija = $_POST['parking_lokacija'] ?? '';
-    $lokacija_vozila = $_POST['lokacija_vozila'] ?? '';
     $usluge = $_POST['usluge'] ?? [];
     $cena = floatval($_POST['cena'] ?? 0);
     $napomena = trim($_POST['napomena'] ?? '');
@@ -41,61 +62,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Datum prijema - automatski trenutno vreme
     $datum_prijema = date('Y-m-d H:i:s');
 
-    if (empty($registracija) || empty($marka) || empty($vlasnik) || empty($kontakt) || empty($parking_lokacija)) {
-        $greska = 'Molimo popunite sva obavezna polja.';
-    } elseif (empty($lokacija_vozila)) {
-        $greska = 'Molimo izaberite lokaciju vozila.';
-    } elseif (empty($usluge)) {
-        $greska = 'Molimo izaberite bar jednu uslugu.';
-    } elseif (!in_array($lokacija_vozila, $dostupne_lokacije)) {
-        // Provera da li je korisnik pokušao da izabere lokaciju koja mu nije dostupna
-        $greska = 'Nemate dozvolu da dodate vozilo na izabranu lokaciju.';
-    } else {
-        // Upload slike
-        $slika_vozila = null;
-        if (isset($_FILES['slika_vozila']) && $_FILES['slika_vozila']['error'] == 0) {
-            $upload_result = upload_slika($_FILES['slika_vozila']);
-            if ($upload_result['success']) {
-                $slika_vozila = $upload_result['filename'];
-            } else {
-                $greska = $upload_result['error'];
+    if (empty($greska)) {
+        if (empty($registracija) || empty($marka) || empty($kontakt) || empty($parking_lokacija)) {
+            $greska = 'Molimo popunite sva obavezna polja.';
+        } elseif (empty($usluge)) {
+            $greska = 'Molimo izaberite bar jednu uslugu.';
+        } else {
+            // Upload slike
+            $slika_vozila = null;
+            if (isset($_FILES['slika_vozila']) && $_FILES['slika_vozila']['error'] == 0) {
+                $upload_result = upload_slika($_FILES['slika_vozila']);
+                if ($upload_result['success']) {
+                    $slika_vozila = $upload_result['filename'];
+                } else {
+                    $greska = $upload_result['error'];
+                }
             }
-        }
 
-        if (empty($greska)) {
-            // Konvertuj usluge u JSON
-            $usluge_json = json_encode($usluge);
+            if (empty($greska)) {
+                // Konvertuj usluge u JSON
+                $usluge_json = json_encode($usluge);
 
-            // Insert u bazu
-            $stmt = $conn->prepare("
-                INSERT INTO vozila (
-                    registracija, sasija, marka, vlasnik, kontakt, 
-                    datum_prijema, slika_vozila, parking_lokacija, 
-                    usluge, cena, napomena, 
-                    kreirao_korisnik_id, lokacija, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'u_radu')
-            ");
+                // Insert u bazu - AŽURIRANO SA NOVIM POLJIMA
+                $stmt = $conn->prepare("
+                    INSERT INTO vozila (
+                        registracija, sasija, marka, vlasnik, tip_klijenta, pravno_lice_id, kontakt, 
+                        datum_prijema, slika_vozila, parking_lokacija, 
+                        usluge, cena, napomena, 
+                        kreirao_korisnik_id, lokacija, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'u_radu')
+                ");
 
-            $stmt->execute([
-                $registracija,
-                $sasija,
-                $marka,
-                $vlasnik,
-                $kontakt,
-                $datum_prijema,
-                $slika_vozila,
-                $parking_lokacija,
-                $usluge_json,
-                $cena,
-                $napomena,
-                $_SESSION['korisnik_id'],
-                $lokacija_vozila,
-            ]);
+                $stmt->execute([
+                    $registracija,
+                    $sasija,
+                    $marka,
+                    $vlasnik,
+                    $tip_klijenta,
+                    $pravno_lice_id,
+                    $kontakt,
+                    $datum_prijema,
+                    $slika_vozila,
+                    $parking_lokacija,
+                    $usluge_json,
+                    $cena,
+                    $napomena,
+                    $_SESSION['korisnik_id'],
+                    $_SESSION['lokacija']
+                ]);
 
-            $uspeh = 'Vozilo uspešno dodato!';
+                $uspeh = 'Vozilo uspešno dodato!';
 
-            // Resetuj formu
-            $_POST = [];
+                // Resetuj formu
+                $_POST = [];
+            }
         }
     }
 }
@@ -128,6 +148,80 @@ include '../../includes/header.php';
 
         <div class="form-card">
             <form method="POST" enctype="multipart/form-data" id="forma-vozilo">
+
+                <!-- TIP KLIJENTA - NOVO -->
+                <div class="form-section">
+                    <h2>👤 Tip klijenta</h2>
+
+                    <div class="form-group">
+                        <label>Klijent je:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input
+                                        type="radio"
+                                        name="tip_klijenta"
+                                        value="fizicko"
+                                        checked
+                                        onchange="toggleKlijentType()"
+                                >
+                                <span>👤 Fizičko lice</span>
+                            </label>
+                            <label class="radio-label">
+                                <input
+                                        type="radio"
+                                        name="tip_klijenta"
+                                        value="pravno"
+                                        onchange="toggleKlijentType()"
+                                >
+                                <span>🏢 Pravno lice</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- FIZIČKO LICE -->
+                    <div id="fizicko-lice-section">
+                        <div class="form-group">
+                            <label for="vlasnik">Ime i prezime vlasnika *</label>
+                            <input
+                                    type="text"
+                                    id="vlasnik"
+                                    name="vlasnik"
+                                    placeholder="npr. Marko Marković"
+                                    value="<?php echo htmlspecialchars($_POST['vlasnik'] ?? ''); ?>"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- PRAVNO LICE -->
+                    <div id="pravno-lice-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="pravno-lice-search">Pretraži pravno lice *</label>
+                            <div class="autocomplete-wrapper">
+                                <input
+                                        type="text"
+                                        id="pravno-lice-search"
+                                        placeholder="Počnite kucati naziv firme..."
+                                        autocomplete="off"
+                                >
+                                <div id="pravno-lice-results" class="autocomplete-results"></div>
+                            </div>
+                            <input type="hidden" id="pravno_lice_id" name="pravno_lice_id">
+                            <div id="selected-pravno-lice" class="selected-item"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="kontakt_osoba">Kontakt osoba (opciono)</label>
+                            <input
+                                    type="text"
+                                    id="kontakt_osoba"
+                                    name="kontakt_osoba"
+                                    placeholder="npr. Petar Petrović"
+                                    value="<?php echo htmlspecialchars($_POST['kontakt_osoba'] ?? ''); ?>"
+                            >
+                            <small>Osoba iz firme koja je dovela vozilo</small>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- IDENTIFIKACIJA VOZILA -->
                 <div class="form-section">
@@ -171,21 +265,9 @@ include '../../includes/header.php';
                     </div>
                 </div>
 
-                <!-- VLASNIK -->
+                <!-- KONTAKT -->
                 <div class="form-section">
-                    <h2>👤 Podaci o vlasniku</h2>
-
-                    <div class="form-group">
-                        <label for="vlasnik">Ime i prezime vlasnika *</label>
-                        <input
-                                type="text"
-                                id="vlasnik"
-                                name="vlasnik"
-                                required
-                                placeholder="npr. Marko Marković"
-                                value="<?php echo htmlspecialchars($_POST['vlasnik'] ?? ''); ?>"
-                        >
-                    </div>
+                    <h2>📞 Kontakt</h2>
 
                     <div class="form-group">
                         <label for="kontakt">Kontakt telefon *</label>
@@ -209,48 +291,47 @@ include '../../includes/header.php';
                     </div>
                 </div>
 
-                <!-- SLIKA VOZILA - SA KAMEROM -->
+                <!-- SLIKA VOZILA -->
                 <div class="form-section">
                     <h2>📷 Slika vozila</h2>
 
-                    <input type="file" id="slika_vozila" name="slika_vozila" accept="image/*">
-
-                    <div class="upload-options">
-                        <button type="button" class="upload-btn" id="camera-btn">
-                            <span class="icon">📸</span>
-                            <span class="text">Uslikaj sada</span>
-                            <span class="subtext">Otvori kameru</span>
+                    <div class="camera-options">
+                        <button type="button" class="btn btn-camera" onclick="openCamera()">
+                            📷 Uslikaj kamerom
                         </button>
-
-                        <button type="button" class="upload-btn" id="upload-btn">
-                            <span class="icon">📁</span>
-                            <span class="text">Uploaduj sliku</span>
-                            <span class="subtext">Izaberi sa uređaja</span>
-                        </button>
+                        <span class="camera-or">ili</span>
+                        <label for="slika_vozila" class="btn btn-upload">
+                            📁 Upload sa uređaja
+                        </label>
                     </div>
 
+                    <input
+                            type="file"
+                            id="slika_vozila"
+                            name="slika_vozila"
+                            accept="image/*"
+                            class="file-input"
+                            style="display: none;"
+                    >
+
                     <div id="slika-preview"></div>
-                </div>
 
-                <!-- LOKACIJA VOZILA -->
-                <div class="form-section">
-                    <h2>📍 Lokacija vozila</h2>
-
-                    <div class="form-group">
-                        <label for="lokacija_vozila">Na kojoj lokaciji se vrši tehnički pregled? *</label>
-                        <select id="lokacija_vozila" name="lokacija_vozila" required>
-                            <option value="">-- Izaberite lokaciju --</option>
-                            <?php foreach ($dostupne_lokacije as $lok): ?>
-                                <option value="<?php echo $lok; ?>" <?php echo (($_POST['lokacija_vozila'] ?? '') == $lok) ? 'selected' : ''; ?>>
-                                    <?php echo $lok; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if ($_SESSION['tip_korisnika'] == 'zaposleni'): ?>
-                            <small>Vi možete dodavati vozila samo na Vašoj lokaciji: <strong><?php echo $_SESSION['lokacija']; ?></strong></small>
-                        <?php else: ?>
-                            <small>Izaberite lokaciju na kojoj se nalazi vozilo</small>
-                        <?php endif; ?>
+                    <!-- Camera Modal -->
+                    <div id="camera-modal" class="camera-modal">
+                        <div class="camera-container">
+                            <div class="camera-header">
+                                <h3>📷 Fotografiši vozilo</h3>
+                                <button type="button" class="camera-close" onclick="closeCamera()">✕</button>
+                            </div>
+                            <video id="camera-video" autoplay playsinline></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                            <div class="camera-controls">
+                                <button type="button" class="btn-capture" onclick="capturePhoto()">
+                                    <span class="capture-icon"></span>
+                                    Uslikaj
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -276,9 +357,6 @@ include '../../includes/header.php';
                     <?php if (empty($usluge_lista)): ?>
                         <div class="alert alert-error">
                             Nema dostupnih usluga. Molimo administratora da doda usluge.
-                            <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
-                                <br><a href="../usluge/dodaj.php">Dodaj prvu uslugu</a>
-                            <?php endif; ?>
                         </div>
                     <?php else: ?>
                         <div class="checkbox-group">
@@ -297,7 +375,7 @@ include '../../includes/header.php';
                                     >
                                     <span>
                                     <?php echo htmlspecialchars($usluga['naziv']); ?>
-                                    <strong style="color: #667eea;">(<?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD)</strong>
+                                    <strong style="color: #FF411C;">(<?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD)</strong>
                                 </span>
                                 </label>
                             <?php endforeach; ?>
@@ -355,25 +433,264 @@ include '../../includes/header.php';
         </div>
     </div>
 
-    <!-- KAMERA MODAL -->
-    <div id="camera-modal" class="camera-modal">
-        <div class="camera-container">
-            <button id="close-camera">×</button>
-            <div class="camera-info">📸 Pozicionirajte vozilo i kliknite na dugme</div>
-            <video id="camera-video" class="camera-video" autoplay playsinline></video>
-            <canvas id="camera-canvas" class="camera-canvas"></canvas>
-            <div class="camera-controls">
-                <button type="button" id="switch-camera-btn" class="camera-btn">
-                    🔄
-                </button>
-                <button type="button" id="capture-btn" class="camera-btn">
-                    📸
-                </button>
-            </div>
-        </div>
-    </div>
+    <style>
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .radio-label:hover {
+            background: #e9ecef;
+            border-color: #FF411C;
+        }
+
+        .radio-label input[type="radio"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .radio-label input[type="radio"]:checked + span {
+            font-weight: 600;
+            color: #FF411C;
+        }
+
+        /* Autocomplete */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .autocomplete-results.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .autocomplete-item-details {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .selected-item {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-left: 4px solid #FF411C;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .selected-item.active {
+            display: block;
+        }
+
+        .selected-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .selected-item-name {
+            font-weight: 600;
+            color: #FF411C;
+            font-size: 16px;
+        }
+
+        .selected-item-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .selected-item-remove:hover {
+            background: #c82333;
+        }
+
+        .selected-item-details {
+            font-size: 14px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .radio-group {
+                flex-direction: column;
+            }
+
+            .radio-label {
+                min-width: 100%;
+            }
+        }
+    </style>
 
     <script>
+        // Toggle između fizičkog i pravnog lica
+        function toggleKlijentType() {
+            const tipKlijenta = document.querySelector('input[name="tip_klijenta"]:checked').value;
+            const fizickoSection = document.getElementById('fizicko-lice-section');
+            const pravnoSection = document.getElementById('pravno-lice-section');
+            const vlasnikInput = document.getElementById('vlasnik');
+            const pravnoLiceInput = document.getElementById('pravno_lice_id');
+
+            if (tipKlijenta === 'pravno') {
+                fizickoSection.style.display = 'none';
+                pravnoSection.style.display = 'block';
+                vlasnikInput.removeAttribute('required');
+                vlasnikInput.value = '';
+            } else {
+                fizickoSection.style.display = 'block';
+                pravnoSection.style.display = 'none';
+                vlasnikInput.setAttribute('required', 'required');
+                pravnoLiceInput.value = '';
+                document.getElementById('selected-pravno-lice').classList.remove('active');
+            }
+        }
+
+        // Autocomplete za pravna lica
+        let searchTimeout;
+        const searchInput = document.getElementById('pravno-lice-search');
+        const resultsDiv = document.getElementById('pravno-lice-results');
+        const selectedDiv = document.getElementById('selected-pravno-lice');
+        const hiddenInput = document.getElementById('pravno_lice_id');
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                resultsDiv.classList.remove('active');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`search_api.php?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Greška pri pretrazi:', error);
+                    });
+            }, 300);
+        });
+
+        function displayResults(results) {
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="autocomplete-item">Nema rezultata</div>';
+                resultsDiv.classList.add('active');
+                return;
+            }
+
+            let html = '';
+            results.forEach(item => {
+                html += `
+            <div class="autocomplete-item" onclick="selectPravnoLice(${item.id}, '${escapeHtml(item.naziv)}', '${escapeHtml(item.pib || '')}', '${escapeHtml(item.kontakt_telefon || '')}')">
+                <div class="autocomplete-item-name">${escapeHtml(item.naziv)}</div>
+                <div class="autocomplete-item-details">
+                    ${item.pib ? 'PIB: ' + escapeHtml(item.pib) : ''}
+                    ${item.kontakt_telefon ? '• Tel: ' + escapeHtml(item.kontakt_telefon) : ''}
+                </div>
+            </div>
+        `;
+            });
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('active');
+        }
+
+        function selectPravnoLice(id, naziv, pib, telefon) {
+            hiddenInput.value = id;
+            searchInput.value = '';
+            resultsDiv.classList.remove('active');
+
+            let details = [];
+            if (pib) details.push('PIB: ' + pib);
+            if (telefon) details.push('Tel: ' + telefon);
+
+            selectedDiv.innerHTML = `
+        <div class="selected-item-header">
+            <div class="selected-item-name">🏢 ${escapeHtml(naziv)}</div>
+            <button type="button" class="selected-item-remove" onclick="removePravnoLice()">✕ Ukloni</button>
+        </div>
+        <div class="selected-item-details">${details.join(' • ')}</div>
+    `;
+            selectedDiv.classList.add('active');
+        }
+
+        function removePravnoLice() {
+            hiddenInput.value = '';
+            selectedDiv.classList.remove('active');
+            selectedDiv.innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Zatvori rezultate kad se klikne van
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.classList.remove('active');
+            }
+        });
+
         // Automatski račun cene
         document.addEventListener('DOMContentLoaded', function() {
             const checkboxes = document.querySelectorAll('.usluga-checkbox');

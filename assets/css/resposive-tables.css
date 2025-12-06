@@ -1,0 +1,400 @@
+/* ============================================
+   RESPONSIVE TABLES - Mr Auto Expert DOO
+   Za tabele vozila i pravnih lica
+   ============================================ */
+
+/* Scroll hint */
+.scroll-hint {
+    background: #FFF5F3;
+    color: #FF411C;
+    padding: 12px 20px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+}
+
+/* Table wrapper za horizontal scroll */
+.table-wrapper {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+/* Table */
+.table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px; /* Minimalna širina za desktop */
+}
+
+.table-wrapper thead {
+    background: #f8f9fa;
+}
+
+.table-wrapper th {
+    padding: 15px 12px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e1e8ed;
+    white-space: nowrap;
+}
+
+.table-wrapper td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+.table-wrapper tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table-wrapper tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.table-wrapper tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Filter section */
+.filter-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
+}
+
+.filter-grid .form-group {
+    margin-bottom: 0;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    font-size: 13px;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.btn-view {
+    background: #FF411C;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #E63A19;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+}
+
+/* Table info */
+.table-info {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    text-align: center;
+    border-radius: 0 0 12px 12px;
+    margin-top: -20px;
+    margin-bottom: 20px;
+}
+
+.table-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-u-radu {
+    background: #dc3545;
+    color: white;
+}
+
+.status-zavrseno {
+    background: #ffc107;
+    color: #333;
+}
+
+.status-placeno {
+    background: #28a745;
+    color: white;
+}
+
+/* Vehicle image */
+.vehicle-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.no-image {
+    width: 60px;
+    height: 60px;
+    background: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .table-wrapper table {
+        min-width: 800px;
+    }
+
+    .table-wrapper th,
+    .table-wrapper td {
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Show scroll hint */
+    .scroll-hint {
+        display: block;
+    }
+
+    /* Table wrapper sa horizontal scroll */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+
+    /* Dodaj scroll indicator */
+    .table-wrapper::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to left, rgba(255,255,255,0.9), transparent);
+        pointer-events: none;
+    }
+
+    .table-wrapper table {
+        min-width: 700px;
+    }
+
+    .table-wrapper th,
+    .table-wrapper td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+
+    /* Kompaktniji action buttons */
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .btn-action {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+
+    /* Filter grid - 1 kolona */
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-section {
+        padding: 20px;
+    }
+
+    /* Vehicle image manji */
+    .vehicle-image,
+    .no-image {
+        width: 50px;
+        height: 50px;
+    }
+
+    .no-image {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scroll-hint {
+        font-size: 12px;
+        padding: 10px 15px;
+    }
+
+    .table-wrapper table {
+        min-width: 600px;
+    }
+
+    .table-wrapper th {
+        font-size: 11px;
+        padding: 8px 6px;
+    }
+
+    .table-wrapper td {
+        font-size: 11px;
+        padding: 8px 6px;
+    }
+
+    .vehicle-image,
+    .no-image {
+        width: 40px;
+        height: 40px;
+    }
+
+    .no-image {
+        font-size: 18px;
+    }
+
+    .btn-action {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .filter-section {
+        padding: 15px;
+    }
+
+    .empty-state {
+        padding: 40px 15px;
+    }
+
+    .empty-state h3 {
+        font-size: 20px;
+    }
+}
+
+/* ============================================
+   ANIMATION FOR SCROLL HINT
+   ============================================ */
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@media (max-width: 768px) {
+    .scroll-hint {
+        animation: pulse 2s ease-in-out infinite;
+    }
+}
+
+/* ============================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================ */
+
+@media (hover: none) and (pointer: coarse) {
+    .btn-action {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .table-wrapper tbody tr:hover {
+        background: transparent;
+    }
+
+    .table-wrapper tbody tr:active {
+        background: #f8f9fa;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .scroll-hint {
+        display: none;
+    }
+
+    .table-wrapper {
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .table-wrapper::after {
+        display: none;
+    }
+
+    .action-buttons {
+        display: none;
+    }
+
+    .filter-section {
+        display: none;
+    }
+}

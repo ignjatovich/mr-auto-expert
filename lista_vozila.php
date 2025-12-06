@@ -10,6 +10,8 @@ proveri_login();
 $page_title = 'Lista vozila - ' . SITE_NAME;
 $base_url = './';
 
+$ime = $_SESSION['ime'];
+$prezime = $_SESSION['prezime'];
 $tip = $_SESSION['tip_korisnika'];
 $lokacija_korisnika = $_SESSION['lokacija'];
 
@@ -26,22 +28,26 @@ $filter_lokacija = $_GET['lokacija'] ?? '';
 $filter_status = $_GET['status'] ?? '';
 $filter_pretraga = $_GET['pretraga'] ?? '';
 
+// Provera da li korisnik ima pristup izabranoj lokaciji
 if (!empty($filter_lokacija) && !in_array($filter_lokacija, $dostupne_lokacije)) {
     $filter_lokacija = '';
 }
 
+// Ako zaposleni, automatski postavi njegov filter
 if ($tip == 'zaposleni' && empty($filter_lokacija)) {
     $filter_lokacija = $lokacija_korisnika;
 }
 
-// Query za preuzimanje vozila
-$sql = "SELECT v.*, k.ime, k.prezime 
+// Query za preuzimanje vozila - AŽURIRANO
+$sql = "SELECT v.*, k.ime, k.prezime, pl.naziv as pravno_lice_naziv
         FROM vozila v 
         LEFT JOIN korisnici k ON v.kreirao_korisnik_id = k.id 
+        LEFT JOIN pravna_lica pl ON v.pravno_lice_id = pl.id
         WHERE 1=1";
 
 $params = [];
 
+// Filter po lokaciji
 if (!empty($filter_lokacija)) {
     $sql .= " AND v.lokacija = ?";
     $params[] = $filter_lokacija;
@@ -51,11 +57,13 @@ if (!empty($filter_lokacija)) {
     $params = array_merge($params, $dostupne_lokacije);
 }
 
+// Filter po statusu
 if (!empty($filter_status)) {
     $sql .= " AND v.status = ?";
     $params[] = $filter_status;
 }
 
+// Pretraga
 if (!empty($filter_pretraga)) {
     $sql .= " AND (v.registracija LIKE ? OR v.marka LIKE ? OR v.vlasnik LIKE ? OR v.kontakt LIKE ?)";
     $search = "%$filter_pretraga%";
@@ -86,6 +94,8 @@ foreach ($vozila as $vozilo) {
 // Include header
 include 'includes/header.php';
 ?>
+
+    <link rel="stylesheet" href="assets/css/responsive-tables.css">
 
     <div class="container">
         <div class="page-header">
@@ -148,7 +158,7 @@ include 'includes/header.php';
                                 name="pretraga"
                                 id="pretraga"
                                 placeholder="Registracija, marka, vlasnik..."
-                                value="<?php echo e($filter_pretraga); ?>"
+                                value="<?php echo htmlspecialchars($filter_pretraga); ?>"
                         >
                     </div>
 
@@ -160,11 +170,12 @@ include 'includes/header.php';
             </form>
         </div>
 
-        <!-- Tabela -->
+        <!-- Scroll hint -->
         <div class="scroll-hint">
-            ← Pomerajte tabelu levo/desno da vidite sve kolone →
+            ← Scroll levo/desno da vidiš sve kolone →
         </div>
 
+        <!-- Tabela -->
         <div class="table-wrapper">
             <?php if (empty($vozila)): ?>
                 <div class="empty-state">
@@ -179,7 +190,8 @@ include 'includes/header.php';
                         <th>Slika</th>
                         <th>Registracija</th>
                         <th>Marka</th>
-                        <th>Vlasnik</th>
+                        <th>Tip klijenta</th>
+                        <th>Vlasnik/Firma</th>
                         <th>Kontakt</th>
                         <th>Datum prijema</th>
                         <th>Lokacija</th>
@@ -193,35 +205,50 @@ include 'includes/header.php';
                         <tr>
                             <td>
                                 <?php if ($vozilo['slika_vozila']): ?>
-                                    <img src="uploads/vozila/<?php echo e($vozilo['slika_vozila']); ?>"
+                                    <img src="uploads/vozila/<?php echo htmlspecialchars($vozilo['slika_vozila']); ?>"
                                          alt="Vozilo"
                                          class="vehicle-image">
                                 <?php else: ?>
                                     <div class="no-image">🚗</div>
                                 <?php endif; ?>
                             </td>
-                            <td><strong><?php echo e($vozilo['registracija']); ?></strong></td>
-                            <td><?php echo e($vozilo['marka']); ?></td>
-                            <td><?php echo e($vozilo['vlasnik']); ?></td>
-                            <td><?php echo e($vozilo['kontakt']); ?></td>
+                            <td><strong><?php echo htmlspecialchars($vozilo['registracija']); ?></strong></td>
+                            <td><?php echo htmlspecialchars($vozilo['marka']); ?></td>
+                            <td>
+                                <?php if ($vozilo['tip_klijenta'] == 'pravno'): ?>
+                                    <span style="color: #FF411C; font-weight: 600;">🏢 Pravno</span>
+                                <?php else: ?>
+                                    <span style="color: #666;">👤 Fizičko</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php
+                                if ($vozilo['tip_klijenta'] == 'pravno' && $vozilo['pravno_lice_naziv']) {
+                                    echo '<strong>' . htmlspecialchars($vozilo['pravno_lice_naziv']) . '</strong>';
+                                } else {
+                                    echo htmlspecialchars($vozilo['vlasnik']);
+                                }
+                                ?>
+                            </td>
+                            <td><?php echo htmlspecialchars($vozilo['kontakt']); ?></td>
                             <td><?php echo formatuj_datum($vozilo['datum_prijema']); ?></td>
-                            <td><?php echo e($vozilo['lokacija']); ?></td>
+                            <td><?php echo htmlspecialchars($vozilo['lokacija']); ?></td>
                             <td>
                             <span class="status-badge status-<?php echo $vozilo['status']; ?>">
                                 <?php echo get_status_text($vozilo['status']); ?>
                             </span>
                             </td>
-                            <td><?php echo e($vozilo['ime'] . ' ' . $vozilo['prezime']); ?></td>
+                            <td><?php echo htmlspecialchars($vozilo['ime'] . ' ' . $vozilo['prezime']); ?></td>
                             <td>
                                 <div class="action-buttons">
                                     <a href="modules/vozila/detalji.php?id=<?php echo $vozilo['id']; ?>"
                                        class="btn-action btn-view">
-                                        👁️
+                                        👁️ Vidi
                                     </a>
                                     <?php if ($tip == 'administrator' || $tip == 'menadzer'): ?>
-                                        <button onclick="obrisiVozilo(<?php echo $vozilo['id']; ?>, '<?php echo e($vozilo['registracija']); ?>')"
+                                        <button onclick="obrisiVozilo(<?php echo $vozilo['id']; ?>, '<?php echo htmlspecialchars($vozilo['registracija'], ENT_QUOTES); ?>')"
                                                 class="btn-action btn-delete">
-                                            🗑️
+                                            🗑️ Obriši
                                         </button>
                                     <?php endif; ?>
                                 </div>
@@ -232,7 +259,66 @@ include 'includes/header.php';
                 </table>
             <?php endif; ?>
         </div>
+
+        <?php if (!empty($vozila)): ?>
+            <div class="table-info">
+                <p>Ukupno: <strong><?php echo count($vozila); ?></strong> vozila</p>
+            </div>
+        <?php endif; ?>
     </div>
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.u-radu .number { color: #dc3545; }
+        .stat-card.zavrseno .number { color: #ffc107; }
+        .stat-card.placeno .number { color: #28a745; }
+        .stat-card.ukupno .number { color: #FF411C; }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-card h4 {
+                font-size: 12px;
+            }
+
+            .stat-card .number {
+                font-size: 24px;
+            }
+        }
+    </style>
 
     <script>
         function obrisiVozilo(id, registracija) {

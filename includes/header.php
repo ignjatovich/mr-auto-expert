@@ -44,6 +44,9 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
             <a href="<?php echo $base_url ?? ''; ?>lista_vozila.php" class="nav-link">
                 📋 Lista vozila
             </a>
+            <a href="<?php echo $base_url ?? ''; ?>modules/pravna_lica/lista.php" class="nav-link">
+                🏢 Pravna lica
+            </a>
             <?php if ($tip != 'zaposleni'): ?>
                 <a href="<?php echo $base_url ?? ''; ?>modules/usluge/lista.php" class="nav-link">
                     🔧 Usluge
@@ -95,6 +98,10 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
             <a href="<?php echo $base_url ?? ''; ?>lista_vozila.php" class="mobile-link">
                 <span class="mobile-link-icon">📋</span>
                 <span class="mobile-link-text">Lista vozila</span>
+            </a>
+            <a href="<?php echo $base_url ?? ''; ?>modules/pravna_lica/lista.php" class="mobile-link">
+                <span class="mobile-link-icon">🏢</span>
+                <span class="mobile-link-text">Pravna lica</span>
             </a>
             <?php if ($tip != 'zaposleni'): ?>
                 <a href="<?php echo $base_url ?? ''; ?>modules/usluge/lista.php" class="mobile-link">
