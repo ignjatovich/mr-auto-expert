@@ -60,9 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['novi_status'])) {
     }
 }
 
-// Dekoduj usluge
-$usluge = json_decode($vozilo['usluge'], true);
-$usluge_lista = get_usluge();
+// Dekoduj usluge i preuzmi njihove nazive i cene
+$usluge_ids = json_decode($vozilo['usluge'], true);
+$usluge_detalji = [];
+
+if (!empty($usluge_ids) && is_array($usluge_ids)) {
+    $placeholders = str_repeat('?,', count($usluge_ids) - 1) . '?';
+    $stmt = $conn->prepare("SELECT id, naziv, cena FROM usluge WHERE id IN ($placeholders)");
+    $stmt->execute($usluge_ids);
+    $usluge_detalji = $stmt->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="sr">
@@ -200,18 +207,27 @@ $usluge_lista = get_usluge();
         }
 
         .usluge-lista li {
-            padding: 10px 15px;
+            padding: 15px;
             background: #f8f9fa;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             border-radius: 6px;
             border-left: 3px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .usluge-lista li:before {
+        .usluge-lista li .usluga-naziv:before {
             content: "✓ ";
             color: #28a745;
             font-weight: bold;
             margin-right: 8px;
+        }
+
+        .usluge-lista li .usluga-cena {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -354,18 +370,25 @@ $usluge_lista = get_usluge();
     <!-- Usluge -->
     <div class="detail-section">
         <h2>🔧 Potrebne usluge</h2>
-        <ul class="usluge-lista">
-            <?php foreach ($usluge as $usluga_key): ?>
-                <li><?php echo e($usluge_lista[$usluga_key] ?? $usluga_key); ?></li>
-            <?php endforeach; ?>
-        </ul>
+        <?php if (empty($usluge_detalji)): ?>
+            <p style="color: #999;">Nema izabranih usluga.</p>
+        <?php else: ?>
+            <ul class="usluge-lista">
+                <?php foreach ($usluge_detalji as $usluga): ?>
+                    <li>
+                        <span class="usluga-naziv"><?php echo e($usluga['naziv']); ?></span>
+                        <span class="usluga-cena"><?php echo number_format($usluga['cena'], 2, ',', '.'); ?> RSD</span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
     </div>
 
     <!-- Cena -->
     <div class="detail-section">
         <h2>💰 Finansije</h2>
         <div class="detail-item">
-            <div class="detail-label">Cena</div>
+            <div class="detail-label">Ukupna cena</div>
             <div class="detail-value" style="font-size: 24px; color: #28a745; font-weight: bold;">
                 <?php echo number_format($vozilo['cena'], 2, ',', '.'); ?> RSD
             </div>
