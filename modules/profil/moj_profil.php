@@ -1,10 +1,10 @@
 <?php
-$base_url = '../';
-require_once '../config.php';
-require_once '../includes/db.php';
-require_once '../includes/auth.php';
-require_once '../includes/functions.php';
-require_once '../includes/header.php';
+$base_url = '../../';
+require_once '../../config.php';
+require_once '../../includes/db.php';
+require_once '../../includes/auth.php';
+require_once '../../includes/functions.php';
+require_once '../../includes/header.php';
 
 proveri_login();
 
@@ -226,4 +226,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once '../../includes/footer.php'; ?>

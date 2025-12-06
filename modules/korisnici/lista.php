@@ -122,7 +122,7 @@ $korisnici = $stmt->fetchAll();
                         <tr>
                             <th>ID</th>
                             <th>Korisničko ime</th>
-                            <th>Ime i prezime</th>
+                            <th>Ime</th>
                             <th>Email</th>
                             <th>Telefon</th>
                             <th>Tip korisnika</th>
@@ -137,7 +137,7 @@ $korisnici = $stmt->fetchAll();
                             <tr>
                                 <td><?php echo $k['id']; ?></td>
                                 <td><strong><?php echo e($k['korisnicko_ime']); ?></strong></td>
-                                <td><?php echo e($k['ime'] . ' ' . $k['prezime']); ?></td>
+                                <td><?php echo e($k['ime']); ?></td>
                                 <td><?php echo e($k['email']); ?></td>
                                 <td><?php echo e($k['telefon']); ?></td>
                                 <td>
@@ -146,13 +146,17 @@ $korisnici = $stmt->fetchAll();
                                 </span>
                                 </td>
                                 <td>
-                                    <span class="badge-lokacija"><?php echo e($k['lokacija']); ?></span>
-                                </td>
-                                <td>
-                                    <?php if ($k['aktivan']): ?>
-                                        <span class="badge-success">✓ Aktivan</span>
+                                    <?php if ($k['tip_korisnika'] == 'administrator'): ?>
+                                        <span class="badge-lokacija" style="background: #667eea; color: white;">Sve lokacije</span>
                                     <?php else: ?>
-                                        <span class="badge-danger">✗ Neaktivan</span>
+                                        <span class="badge-lokacija"><?php echo e($k['lokacija']); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: center; font-size: 20px;">
+                                    <?php if ($k['aktivan']): ?>
+                                        <span style="color: #28a745;" title="Aktivan">✓</span>
+                                    <?php else: ?>
+                                        <span style="color: #dc3545;" title="Neaktivan">✗</span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
