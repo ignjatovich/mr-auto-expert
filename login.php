@@ -28,44 +28,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($korisnik && password_verify($sifra, $korisnik['sifra'])) {
             // Uspešan login
-            // Uspešan login
             $_SESSION['korisnik_id'] = $korisnik['id'];
             $_SESSION['korisnicko_ime'] = $korisnik['korisnicko_ime'];
             $_SESSION['ime'] = $korisnik['ime'];
             $_SESSION['prezime'] = $korisnik['prezime'];
             $_SESSION['tip_korisnika'] = $korisnik['tip_korisnika'];
-            $_SESSION['lokacija'] = $korisnik['lokacija']; // Backward compatibility
+            $_SESSION['lokacija'] = $korisnik['lokacija'];
 
-// Dodaj lokacije u sesiju
+            // NOVE LOKACIJE - multi-location support
+            $_SESSION['sve_lokacije'] = $korisnik['sve_lokacije'] ? true : false;
+
             if ($korisnik['sve_lokacije']) {
+                // Sve lokacije
                 $_SESSION['lokacije'] = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
-                $_SESSION['sve_lokacije'] = true;
             } elseif (!empty($korisnik['lokacije'])) {
+                // Više lokacija iz JSON
                 $_SESSION['lokacije'] = json_decode($korisnik['lokacije'], true);
-                $_SESSION['sve_lokacije'] = false;
             } else {
+                // Jedna lokacija (stari sistem)
                 $_SESSION['lokacije'] = [$korisnik['lokacija']];
-                $_SESSION['sve_lokacije'] = false;
             }
 
-// Redirect
-            if (isset($_SESSION['redirect_after_login'])) {
-                $redirect_url = $_SESSION['redirect_after_login'];
-                unset($_SESSION['redirect_after_login']);
-                header('Location: ' . $redirect_url);
-            } else {
-                header('Location: dashboard.php');
-            }
-            exit();
-
-            // NOVO: Proveri da li ima sačuvanu stranicu za redirect
-            if (isset($_SESSION['redirect_after_login'])) {
-                $redirect_url = $_SESSION['redirect_after_login'];
-                unset($_SESSION['redirect_after_login']);
-                header('Location: ' . $redirect_url);
-            } else {
-                header('Location: dashboard.php');
-            }
+            header('Location: dashboard.php');
             exit();
         } else {
             $greska = 'Pogrešno korisničko ime/email ili šifra.';
@@ -105,19 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="login-container">
     <div class="login-box">
         <div class="login-header">
-            <h1> MR AUTO EXPERT DOO</h1>
+            <h1>🚗 MR AUTO EXPERT DOO</h1>
             <p>Prijavite se na sistem</p>
         </div>
 
         <?php if ($greska): ?>
             <div class="alert alert-error">
                 <?php echo htmlspecialchars($greska); ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['redirect_after_login'])): ?>
-            <div class="alert" style="background: #e7f3ff; color: #0066cc; border-left: 4px solid #0066cc;">
-                💡 Prijavite se da biste pristupili stranici koju ste tražili.
             </div>
         <?php endif; ?>
 
@@ -153,10 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 Prijavi se
             </button>
         </form>
-        <div class="login-footer">
-            <p>Ako imate poteškoća, kontaktirajte <strong> administratora </strong> ili <strong> menadžera </strong> sistema </p>
-        </div>
 
+        <div class="login-footer">
+            <p>Ako imate poteškoća, obratite se <strong> administratoru </strong> ili <strong> menadžeru </strong> sistema. </p>
+        </div>
     </div>
 </div>
 </body>

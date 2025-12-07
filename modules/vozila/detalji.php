@@ -37,10 +37,13 @@ if (!$vozilo) {
 }
 
 // Provera pristupa - zaposleni mogu videti samo vozila sa svoje lokacije
-if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['lokacija'] != $_SESSION['lokacija']) {
-    $_SESSION['greska'] = 'Nemate pristup ovom vozilu!';
-    header('Location: ../../lista_vozila.php');
-    exit();
+if ($_SESSION['tip_korisnika'] == 'zaposleni') {
+    $dostupne_lokacije = get_korisnik_lokacije();
+    if (!in_array($vozilo['lokacija'], $dostupne_lokacije)) {
+        $_SESSION['greska'] = 'Nemate pristup ovom vozilu!';
+        header('Location: ../../lista_vozila.php');
+        exit();
+    }
 }
 
 // Promena statusa
@@ -87,6 +90,36 @@ if (!empty($vozilo['custom_usluge'])) {
 ?>
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/detalji.css">
 
+    <style>
+        /* Lokacija badge - vizuelno istaknuta */
+        .lokacija-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #FF411C 0%, #E63A19 100%);
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255, 65, 28, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        /* Responsive za mobile */
+        @media (max-width: 768px) {
+            .page-header .buttons-details {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .page-header .buttons-details .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+
     <div class="container">
         <div class="page-header">
             <h1>🚗 Detalji vozila: <?php echo e($vozilo['registracija']); ?></h1>
@@ -98,8 +131,7 @@ if (!empty($vozilo['custom_usluge'])) {
                     $moze_menjati = true; // Admin i menadžer mogu menjati SVA vozila
                 } elseif ($_SESSION['tip_korisnika'] == 'zaposleni') {
                     $moze_menjati = true;
-}
-
+                }
 
                 if ($moze_menjati):
                     ?>
@@ -210,12 +242,16 @@ if (!empty($vozilo['custom_usluge'])) {
                     <div class="detail-value"><?php echo formatuj_datum($vozilo['datum_prijema']); ?></div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-label">Parking lokacija</div>
-                    <div class="detail-value"><?php echo e($vozilo['parking_lokacija']); ?></div>
+                    <div class="detail-label">Lokacija vozila</div>
+                    <div class="detail-value">
+                        <span class="lokacija-badge">
+                            📍 <?php echo e($vozilo['lokacija']); ?>
+                        </span>
+                    </div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-label">Lokacija servisa</div>
-                    <div class="detail-value"><?php echo e($vozilo['lokacija']); ?></div>
+                    <div class="detail-label">Parking pozicija</div>
+                    <div class="detail-value"><?php echo e($vozilo['parking_lokacija']); ?></div>
                 </div>
             </div>
         </div>

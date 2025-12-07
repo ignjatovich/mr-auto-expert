@@ -86,8 +86,17 @@ foreach ($lokacije_stats as $stat) {
     <div class="container">
         <div class="welcome-section">
             <h1>Dobrodošli, <?php echo htmlspecialchars($ime); ?>! 👋</h1>
-            <?php if ($tip != 'administrator'): ?>
-                <p>Lokacija: 📍<strong><?php echo htmlspecialchars($lokacija); ?></strong></p>
+            <?php
+            // Prikaži dodeljene lokacije
+            $dostupne_lokacije = get_korisnik_lokacije();
+
+            if (isset($_SESSION['sve_lokacije']) && $_SESSION['sve_lokacije']):
+                ?>
+                <p>Lokacije: 📍<strong>Sve lokacije (Ostružnica, Žarkovo, Mirijevo)</strong></p>
+            <?php elseif (count($dostupne_lokacije) > 1): ?>
+                <p>Dodeljene lokacije: 📍<strong><?php echo implode(', ', $dostupne_lokacije); ?></strong></p>
+            <?php elseif (count($dostupne_lokacije) == 1): ?>
+                <p>Lokacija: 📍<strong><?php echo htmlspecialchars($dostupne_lokacije[0]); ?></strong></p>
             <?php endif; ?>
         </div>
 
@@ -270,6 +279,9 @@ foreach ($lokacije_stats as $stat) {
                     <a href="modules/korisnici/lista.php" class="btn btn-secondary">👥 Upravljaj korisnicima</a>
                 <?php endif; ?>
                 <a href="modules/pravna_lica/lista.php" class="btn btn-secondary">🏢 Pravna lica</a>
+
+                <!-- NOVO DUGME -->
+                <button onclick="openUputstva()" class="btn btn-secondary uputstvo-dugme">📖 Uputstva</button>
             </div>
         </div>
     </div>
@@ -281,8 +293,307 @@ foreach ($lokacije_stats as $stat) {
             <div class="access-modal-icon">🔒</div>
             <h2>Nema dozvole za pristup</h2>
             <p id="accessModalMessage">Nemate pristup lokaciji <strong id="lokacijaNaziv"></strong>.</p>
-            <p class="access-modal-info">Možete pristupiti samo lokaciji: <strong><?php echo htmlspecialchars($lokacija_korisnika); ?></strong></p>
             <button onclick="zatvoriModal()" class="btn-modal-ok">U redu</button>
+        </div>
+    </div>
+
+    <!-- MODAL ZA UPUTSTVA -->
+    <div id="uputstva-modal" class="uputstva-modal">
+        <div class="uputstva-container">
+            <div class="uputstva-header">
+                <h2>📖 Uputstvo za korišćenje</h2>
+                <button class="uputstva-close" onclick="closeUputstva()">✕</button>
+            </div>
+            <div class="uputstva-content">
+                <?php if ($tip == 'administrator'): ?>
+                    <!-- ADMINISTRATOR UPUTSTVA -->
+                    <h3>🔐 Administrator - Potpuna kontrola sistema</h3>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📊 Pregled sistema</h4>
+                        <p>Kao administrator imate <strong>potpuni pristup</strong> svim funkcijama aplikacije za sve tri lokacije (Ostružnica, Žarkovo, Mirijevo).</p>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>👥 Upravljanje korisnicima</h4>
+                        <ul>
+                            <li><strong>Dodavanje korisnika:</strong> Možete kreirati administratore, menadžere i zaposlene</li>
+                            <li><strong>Dodela lokacija:</strong> Kod kreiranja menadžera/zaposlenih, dodelite im jednu ili više lokacija</li>
+                            <li><strong>Izmena korisnika:</strong> Možete menjati sve podatke, tip korisnika, lokacije i šifre</li>
+                            <li><strong>Brisanje:</strong> Možete obrisati korisnike koji nemaju vezanih vozila</li>
+                            <li><strong>Aktivacija/deaktivacija:</strong> Kontrolišite ko može da se prijavi na sistem</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🚗 Upravljanje vozilima</h4>
+                        <ul>
+                            <li><strong>Dodavanje vozila:</strong> Možete dodati vozilo za bilo koju lokaciju</li>
+                            <li><strong>Izbor lokacije:</strong> Prilikom dodavanja, birajte za koju lokaciju dodajete vozilo</li>
+                            <li><strong>Izmena:</strong> Možete izmeniti SVA vozila sa svih lokacija</li>
+                            <li><strong>Promena lokacije:</strong> Možete premestiti vozilo sa jedne lokacije na drugu</li>
+                            <li><strong>Brisanje:</strong> Možete obrisati bilo koje vozilo</li>
+                            <li><strong>Statusi:</strong> U radu (🔴), Završeno (🟡), Plaćeno (🟢)</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🔧 Usluge</h4>
+                        <ul>
+                            <li>Dodajte standardne usluge koje se nude na svim lokacijama</li>
+                            <li>Postavite cene usluga</li>
+                            <li>Aktivirajte/deaktivirajte usluge po potrebi</li>
+                            <li>Custom usluge se dodaju direktno na vozilu</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🏢 Pravna lica</h4>
+                        <ul>
+                            <li>Kreirajte firme koje redovno koriste usluge</li>
+                            <li>Čuvajte PIB, kontakt telefon, email i adresu</li>
+                            <li>Prilikom dodavanja vozila, birajte između fizičkog i pravnog lica</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>⚙️ Tipovi korisnika</h4>
+                        <p><strong>Administrator:</strong> Vi - potpuna kontrola</p>
+                        <p><strong>Menadžer:</strong> Može upravljati zaposlenima, vozilima i uslugama. Vidi samo dodeljene lokacije. Ne može menjati administratore ili druge menadžere.</p>
+                        <p><strong>Zaposleni:</strong> Može dodavati/menjati vozila samo za svoju lokaciju. Nema pristup upravljanju korisnicima.</p>
+                    </div>
+
+                <?php elseif ($tip == 'menadzer'): ?>
+                    <!-- MENADŽER UPUTSTVA -->
+                    <h3>👔 Menadžer - Upravljanje zaposlenima i vozilima</h3>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📊 Vaš pristup</h4>
+                        <p>Kao menadžer imate pristup <strong>dodeljenim lokacijama</strong>:</p>
+                        <p><strong><?php echo implode(', ', get_korisnik_lokacije()); ?></strong></p>
+                        <p>Vidite i upravljate vozilima samo sa ovih lokacija.</p>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>👥 Upravljanje zaposlenima</h4>
+                        <ul>
+                            <li><strong>Dodavanje zaposlenih:</strong> Možete kreirati nove zaposlene za vaše lokacije</li>
+                            <li><strong>Dodela lokacije:</strong> Odredite na kojoj lokaciji zaposleni radi</li>
+                            <li><strong>Izmena podataka:</strong> Možete menjati podatke zaposlenih (ime, email, telefon, lokaciju)</li>
+                            <li><strong>Promena šifre:</strong> Možete resetovati šifre zaposlenima</li>
+                            <li><strong>Brisanje:</strong> Možete obrisati zaposlene koji nemaju vezanih vozila</li>
+                            <li><strong>⚠️ NE možete:</strong> Menjati administratore ili druge menadžere</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🚗 Upravljanje vozilima</h4>
+                        <ul>
+                            <li><strong>Dodavanje vozila:</strong> Dodajete vozila za svoje dodeljene lokacije</li>
+                            <li><strong>Izbor lokacije:</strong> Birajte iz dropdown menija za koju lokaciju dodajete vozilo</li>
+                            <li><strong>Izmena:</strong> Možete izmeniti sva vozila sa vaših lokacija</li>
+                            <li><strong>Promena lokacije:</strong> Možete premestiti vozilo između vaših dodeljenih lokacija</li>
+                            <li><strong>Brisanje:</strong> Možete obrisati vozila sa vaših lokacija</li>
+                            <li><strong>Promjena statusa:</strong> U radu → Završeno → Plaćeno</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📋 Korak po korak - Dodavanje vozila</h4>
+                        <ol>
+                            <li>Kliknite "➕ Dodaj vozilo"</li>
+                            <li><strong>Izaberite lokaciju</strong> vozila iz dropdown menija</li>
+                            <li>Odaberite tip klijenta (fizičko ili pravno lice)</li>
+                            <li>Unesite registraciju, marku, kontakt</li>
+                            <li>Uslikajte vozilo ili upload-ujte sliku</li>
+                            <li>Izaberite parking poziciju (Silos, Balon, Veliki parking)</li>
+                            <li>Štiklirajte potrebne usluge</li>
+                            <li>Dodajte custom usluge ako je potrebno</li>
+                            <li>Cena se računa automatski</li>
+                            <li>Kliknite "Dodaj vozilo"</li>
+                        </ol>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🔧 Usluge</h4>
+                        <ul>
+                            <li>Možete dodavati i menjati standardne usluge</li>
+                            <li>Postavite cene usluga</li>
+                            <li>Aktivirajte/deaktivirajte usluge</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🏢 Pravna lica</h4>
+                        <ul>
+                            <li>Dodajte firme koje redovno koriste usluge</li>
+                            <li>Čuvajte kontakt podatke firmi</li>
+                            <li>Prilikom dodavanja vozila, birajte pravno lice umesto fizičkog</li>
+                        </ul>
+                    </div>
+
+                <?php else: // Zaposleni ?>
+                    <!-- ZAPOSLENI UPUTSTVA -->
+                    <h3>👷 Zaposleni - Rad sa vozilima</h3>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📊 Vaš pristup</h4>
+                        <p>Kao zaposleni imate pristup <strong>samo svojoj lokaciji</strong>:</p>
+                        <p><strong>📍 <?php echo implode(', ', get_korisnik_lokacije()); ?></strong></p>
+                        <p>Vidite i upravljate vozilima samo sa ove lokacije.</p>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📋 Korak po korak - Dodavanje vozila</h4>
+                        <ol>
+                            <li>Kliknite na <strong>"➕ Dodaj vozilo"</strong></li>
+                            <li><strong>Lokacija je automatski postavljena</strong> na vašu lokaciju (<?php echo get_korisnik_lokacije()[0]; ?>)</li>
+                            <li><strong>Tip klijenta:</strong> Kliknite na "👤 Fizičko lice" ili "🏢 Pravno lice"</li>
+                            <li>Ako je <strong>fizičko lice:</strong> Unesite ime i prezime vlasnika</li>
+                            <li>Ako je <strong>pravno lice:</strong> Počnite kucati naziv firme i izaberite iz liste</li>
+                        </ol>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🚗 Unos podataka o vozilu</h4>
+                        <ol>
+                            <li><strong>Registarska oznaka:</strong> npr. BG-123-AB (obavezno)</li>
+                            <li><strong>Broj šasije (VIN):</strong> npr. WBA12345678901234 (opciono)</li>
+                            <li><strong>Marka vozila:</strong> npr. BMW X5 (obavezno)</li>
+                            <li><strong>Kontakt telefon:</strong> npr. 061 123 4567</li>
+                        </ol>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📷 Slikanje vozila</h4>
+                        <p>Imate <strong>2 opcije</strong> za dodavanje slike:</p>
+                        <ol>
+                            <li><strong>"📷 Uslikaj kamerom":</strong>
+                                <ul>
+                                    <li>Kliknite na dugme</li>
+                                    <li>Dozvolite pristup kameri</li>
+                                    <li>Usmerite kameru na vozilo</li>
+                                    <li>Kliknite "Uslikaj"</li>
+                                    <li>Slika se automatski dodaje</li>
+                                </ul>
+                            </li>
+                            <li><strong>"📁 Upload sa uređaja":</strong>
+                                <ul>
+                                    <li>Kliknite na dugme</li>
+                                    <li>Izaberite sliku iz galerije</li>
+                                    <li>Slika se automatski dodaje</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🅿️ Parking lokacija</h4>
+                        <p>Izaberite gde je vozilo parkirano:</p>
+                        <ul>
+                            <li><strong>Silos</strong></li>
+                            <li><strong>Balon parking</strong></li>
+                            <li><strong>Veliki parking</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🔧 Izbor usluga</h4>
+                        <p><strong>Standardne usluge:</strong> Štiklirajte sve potrebne usluge</p>
+                        <ul>
+                            <li>Tehnički pregled</li>
+                            <li>Registracija vozila</li>
+                            <li>Carina</li>
+                            <li>Ugradnja tahografa</li>
+                            <li>Ispitivanje vozila</li>
+                            <li>Reatest TNG/KPG</li>
+                            <li>Utiskivanje identifikacionih oznaka</li>
+                            <li>Izdavanje probnih tablica</li>
+                        </ul>
+
+                        <p style="margin-top: 15px;"><strong>Custom usluge (dodatne):</strong></p>
+                        <ul>
+                            <li>Unesite naziv custom usluge (npr. "Popravka haube")</li>
+                            <li>Unesite cenu</li>
+                            <li>Možete dodati više custom usluga klikom na "➕ Dodaj još jednu"</li>
+                        </ul>
+
+                        <p style="margin-top: 15px;"><strong>💰 Cena se automatski računa!</strong></p>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📝 Napomena (opciono)</h4>
+                        <p>Unesite bilo kakve dodatne informacije o vozilu ili poslu:</p>
+                        <ul>
+                            <li>Posebne napomene vlasnika</li>
+                            <li>Hitnost posla</li>
+                            <li>Uočeni problemi</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>📊 Promjena statusa vozila</h4>
+                        <p>Nakon dodavanja, vozilo je automatski u statusu <strong>🔴 U radu</strong></p>
+                        <ol>
+                            <li>Kliknite na vozilo da vidite detalje</li>
+                            <li>U sekciji "Status vozila" možete promeniti status:
+                                <ul>
+                                    <li><strong>🔴 U radu:</strong> Posao je u toku</li>
+                                    <li><strong>🟡 Završeno:</strong> Posao je gotov, čeka se plaćanje</li>
+                                    <li><strong>🟢 Plaćeno:</strong> Posao je završen i plaćen</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>✏️ Izmena vozila</h4>
+                        <ul>
+                            <li>Možete izmeniti <strong>sva vozila sa vaše lokacije</strong></li>
+                            <li>Kliknite "Vidi detalje" pa "✏️ Izmeni"</li>
+                            <li>Izmenite potrebne podatke</li>
+                            <li><strong>NE možete promeniti lokaciju vozila</strong> (to mogu samo menadžeri i administratori)</li>
+                            <li>Kliknite "Sačuvaj izmene"</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🗑️ Brisanje vozila</h4>
+                        <ul>
+                            <li>Možete obrisati <strong>samo vozila koja ste Vi dodali</strong></li>
+                            <li>Kliknite "Vidi detalje" pa "🗑️ Obriši"</li>
+                            <li>Potvrdite brisanje</li>
+                            <li><strong>⚠️ Brisanje se ne može poništiti!</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>🏢 Pravna lica</h4>
+                        <ul>
+                            <li>Možete dodavati nove firme u bazu</li>
+                            <li>Unesite naziv firme, PIB, kontakt telefon</li>
+                            <li>Kada dodajete vozilo, birajte pravno lice umesto fizičkog</li>
+                        </ul>
+                    </div>
+
+                    <div class="uputstvo-sekcija">
+                        <h4>💡 Saveti</h4>
+                        <ul>
+                            <li><strong>Uvek slikajte vozilo</strong> - dokaz stanja pri prijemu</li>
+                            <li><strong>Proverite registraciju</strong> - mora biti tačna</li>
+                            <li><strong>Unesite tačan kontakt telefon</strong> - da možete nazvati vlasnika</li>
+                            <li><strong>Birajte tačnu parking poziciju</strong> - lakše ćete naći vozilo</li>
+                            <li><strong>Redovno menjajte status</strong> - svi znaju gde je posao</li>
+                        </ul>
+                    </div>
+
+                <?php endif; ?>
+
+                <div class="uputstvo-sekcija" style="background: #e7f3ff; border-left: 4px solid #0066cc; padding: 15px; margin-top: 20px;">
+                    <h4>❓ Imate pitanja?</h4>
+                    <p>Kontaktirajte svog administratora ili menadžera za dodatnu pomoć.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -305,6 +616,10 @@ foreach ($lokacije_stats as $stat) {
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             transition: left 0.5s;
+        }
+
+        .uputstvo-dugme {
+            background-color: #FF411C !important;
         }
 
         .card-link:hover::before {
@@ -667,6 +982,205 @@ foreach ($lokacije_stats as $stat) {
             .access-modal-content { padding: 25px; }
             .access-modal-icon { font-size: 48px; }
         }
+
+        /* UPUTSTVA MODAL */
+        .uputstva-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .uputstva-modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .uputstva-container {
+            background: white;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .uputstva-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #FF411C 0%, #E63A19 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .uputstva-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .uputstva-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 28px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .uputstva-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .uputstva-content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .uputstva-content h3 {
+            color: #FF411C;
+            font-size: 22px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #FFE5E0;
+        }
+
+        .uputstva-content h4 {
+            color: #333;
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+
+        .uputstvo-sekcija {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #FF411C;
+        }
+
+        .uputstvo-sekcija ul {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+
+        .uputstvo-sekcija li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .uputstvo-sekcija ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+
+        .uputstvo-sekcija ol li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .uputstvo-sekcija p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .uputstvo-sekcija strong {
+            color: #FF411C;
+        }
+
+        /* Scrollbar styling */
+        .uputstva-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .uputstva-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .uputstva-content::-webkit-scrollbar-thumb {
+            background: #FF411C;
+            border-radius: 10px;
+        }
+
+        .uputstva-content::-webkit-scrollbar-thumb:hover {
+            background: #E63A19;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .uputstva-modal {
+                padding: 10px;
+            }
+
+            .uputstva-modal.active {
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
+
+            .uputstva-container {
+                max-height: 90vh;
+            }
+
+            .uputstva-header {
+                padding: 20px;
+            }
+
+            .uputstva-header h2 {
+                font-size: 20px;
+            }
+
+            .uputstva-content {
+                padding: 20px;
+            }
+
+            .uputstva-content h3 {
+                font-size: 19px;
+            }
+
+            .uputstva-content h4 {
+                font-size: 16px;
+            }
+
+            .uputstvo-sekcija {
+                padding: 15px;
+            }
+        }
     </style>
 
     <script>
@@ -695,6 +1209,30 @@ foreach ($lokacije_stats as $stat) {
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 zatvoriModal();
+            }
+        });
+
+        function openUputstva() {
+            document.getElementById('uputstva-modal').classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent body scroll
+        }
+
+        function closeUputstva() {
+            document.getElementById('uputstva-modal').classList.remove('active');
+            document.body.style.overflow = 'auto'; // Re-enable body scroll
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeUputstva();
+            }
+        });
+
+        // Close on backdrop click
+        document.getElementById('uputstva-modal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUputstva();
             }
         });
     </script>

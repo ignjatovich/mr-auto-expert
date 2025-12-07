@@ -15,6 +15,10 @@ require_once '../../includes/header.php';
 // SVI korisnici mogu da izmene vozila, ali zaposleni samo svoja
 proveri_login();
 
+// Preuzmi dostupne lokacije za trenutnog korisnika
+$dostupne_lokacije = get_korisnik_lokacije();
+$tip_korisnika = $_SESSION['tip_korisnika'];
+
 $id = $_GET['id'] ?? 0;
 $greska = '';
 $uspeh = '';
@@ -81,6 +85,17 @@ if (!empty($vozilo['custom_usluge'])) {
         // Novi format - već je array
         $custom_usluge = $decoded;
     }
+}
+
+// LOKACIJA VOZILA - NOVA LOGIKA
+$dostupne_lokacije = get_korisnik_lokacije();
+$lokacija_vozila = $_POST['lokacija_vozila'] ?? $vozilo['lokacija'];
+
+// Validacija lokacije
+if (empty($lokacija_vozila)) {
+    $greska = 'Molimo izaberite lokaciju vozila.';
+} elseif (!in_array($lokacija_vozila, $dostupne_lokacije)) {
+    $greska = 'Nemate pristup izabranoj lokaciji!';
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -181,6 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     cena = ?,
                     napomena = ?,
                     status = ?,
+                    lokacija = ?,
                     izmenjeno_korisnik_id = ?
                 WHERE id = ?
             ");
@@ -201,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $cena,
                 $napomena,
                 $status,
+                $lokacija_vozila,
                 $_SESSION['korisnik_id'],
                 $id
             ]);
@@ -297,6 +314,41 @@ $usluge_lista = get_usluge();
                                 value="<?php echo e($vozilo['marka']); ?>"
                         >
                     </div>
+                </div>
+
+                <!-- LOKACIJA VOZILA -->
+                <div class="form-section">
+                    <h2>📍 Lokacija vozila</h2>
+
+                    <?php if ($_SESSION['tip_korisnika'] == 'zaposleni'): ?>
+                        <!-- Zaposleni - samo info box -->
+                        <div class="info-box">
+                            <strong>Trenutna lokacija:</strong> <?php echo e($vozilo['lokacija']); ?>
+                            <br><small>Zaposleni mogu menjati vozila samo na svojoj lokaciji</small>
+                        </div>
+                        <input type="hidden" name="lokacija_vozila" value="<?php echo e($vozilo['lokacija']); ?>">
+
+                    <?php else: ?>
+                        <!-- Menadžer/Administrator - dropdown -->
+                        <div class="form-group">
+                            <label for="lokacija_vozila">Lokacija *</label>
+                            <select id="lokacija_vozila" name="lokacija_vozila" required>
+                                <option value="">-- Izaberite lokaciju --</option>
+                                <?php
+                                $dostupne_lok = get_korisnik_lokacije();
+                                foreach ($dostupne_lok as $lok):
+                                    ?>
+                                    <option value="<?php echo e($lok); ?>"
+                                        <?php echo ($vozilo['lokacija'] == $lok) ? 'selected' : ''; ?>>
+                                        📍 <?php echo e($lok); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small>
+                                Vaše dodeljene lokacije: <strong><?php echo implode(', ', $dostupne_lok); ?></strong>
+                            </small>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- TIP KLIJENTA -->

@@ -1,10 +1,8 @@
 <?php
-$base_url = '../../';
 require_once '../../config.php';
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 require_once '../../includes/functions.php';
-require_once '../../includes/header.php';
 
 // Samo administrator i menadžer mogu pristupiti
 proveri_tip(['administrator', 'menadzer']);
@@ -14,6 +12,7 @@ $greska = '';
 $uspeh = '';
 
 if (empty($id)) {
+    $_SESSION['greska'] = 'ID korisnika nije naveden!';
     header('Location: lista.php');
     exit();
 }
@@ -42,15 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = trim($_POST['email'] ?? '');
     $telefon = trim($_POST['telefon'] ?? '');
     $tip_korisnika = $_POST['tip_korisnika'] ?? $korisnik['tip_korisnika'];
-    $lokacija = $_POST['lokacija'] ?? '';
     $aktivan = isset($_POST['aktivan']) ? 1 : 0;
     $nova_sifra = $_POST['nova_sifra'] ?? '';
     $potvrdi_sifru = $_POST['potvrdi_sifru'] ?? '';
 
     if (empty($ime)) {
         $greska = 'Ime je obavezno.';
-    } elseif (empty($lokacija)) {
-        $greska = 'Lokacija je obavezna.';
     } else {
         // Provera da li menadžer pokušava da dodeli tip administratora ili menadžera
         if ($_SESSION['tip_korisnika'] == 'menadzer' && in_array($tip_korisnika, ['administrator', 'menadzer'])) {
@@ -69,75 +65,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+        // LOKACIJE - nova logika
+        if (empty($greska)) {
+            $lokacija = null;
+            $lokacije_json = null;
+            $sve_lokacije = 0;
+
+            if ($tip_korisnika == 'zaposleni') {
+                // Zaposleni - jedna lokacija
+                $lokacija = $_POST['lokacija'] ?? '';
+                if (empty($lokacija)) {
+                    $greska = 'Lokacija je obavezna.';
+                }
+            } else {
+                // Administrator ili menadžer - više lokacija
+                $sve_lokacije = isset($_POST['sve_lokacije']) ? 1 : 0;
+
+                if ($sve_lokacije) {
+                    // Sve lokacije
+                    $lokacija = 'Ostružnica'; // Default prva
+                    $lokacije_json = json_encode(['Ostružnica', 'Žarkovo', 'Mirijevo']);
+                } else {
+                    // Izabrane lokacije
+                    $izabrane_lokacije = $_POST['lokacije'] ?? [];
+
+                    if (empty($izabrane_lokacije)) {
+                        $greska = 'Morate izabrati bar jednu lokaciju ili označiti "Sve lokacije".';
+                    } else {
+                        $lokacija = $izabrane_lokacije[0]; // Prva kao default
+                        $lokacije_json = json_encode($izabrane_lokacije);
+                    }
+                }
+            }
+        }
+
         if (empty($greska)) {
             if ($menja_sifru) {
                 // Ažuriraj podatke i šifru
                 $nova_sifra_hash = password_hash($nova_sifra, PASSWORD_DEFAULT);
-                // Priprema lokacija
-                $sve_lokacije = 0;
-                $lokacije_json = null;
-                $prva_lokacija = null;
-
-                if (isset($_POST['sve_lokacije']) && $_POST['sve_lokacije'] == 1) {
-                    $sve_lokacije = 1;
-                    $prva_lokacija = 'Ostružnica';
-                } elseif (isset($_POST['lokacije']) && is_array($_POST['lokacije']) && count($_POST['lokacije']) > 0) {
-                    $lokacije_json = json_encode($_POST['lokacije']);
-                    $prva_lokacija = $_POST['lokacije'][0];
-                } else {
-                    $prva_lokacija = $_POST['lokacija'] ?? $korisnik['lokacija'];
-                }
-
-                if ($menja_sifru) {
-                    $nova_sifra_hash = password_hash($nova_sifra, PASSWORD_DEFAULT);
-                    $stmt = $conn->prepare("
-        UPDATE korisnici 
-        SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?, sifra = ?
-        WHERE id = ?
-    ");
-                    $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $prva_lokacija, $lokacije_json, $sve_lokacije, $aktivan, $nova_sifra_hash, $id]);
-                } else {
-                    $stmt = $conn->prepare("
-        UPDATE korisnici 
-        SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?
-        WHERE id = ?
-    ");
-                    $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $prva_lokacija, $lokacije_json, $sve_lokacije, $aktivan, $id]);
-                }
+                $stmt = $conn->prepare("
+                    UPDATE korisnici 
+                    SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?, sifra = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $lokacija, $lokacije_json, $sve_lokacije, $aktivan, $nova_sifra_hash, $id]);
                 $uspeh = 'Korisnik i šifra uspešno ažurirani!';
             } else {
                 // Ažuriraj samo podatke
-                // Priprema lokacija
-                $sve_lokacije = 0;
-                $lokacije_json = null;
-                $prva_lokacija = null;
-
-                if (isset($_POST['sve_lokacije']) && $_POST['sve_lokacije'] == 1) {
-                    $sve_lokacije = 1;
-                    $prva_lokacija = 'Ostružnica';
-                } elseif (isset($_POST['lokacije']) && is_array($_POST['lokacije']) && count($_POST['lokacije']) > 0) {
-                    $lokacije_json = json_encode($_POST['lokacije']);
-                    $prva_lokacija = $_POST['lokacije'][0];
-                } else {
-                    $prva_lokacija = $_POST['lokacija'] ?? $korisnik['lokacija'];
-                }
-
-                if ($menja_sifru) {
-                    $nova_sifra_hash = password_hash($nova_sifra, PASSWORD_DEFAULT);
-                    $stmt = $conn->prepare("
-        UPDATE korisnici 
-        SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?, sifra = ?
-        WHERE id = ?
-    ");
-                    $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $prva_lokacija, $lokacije_json, $sve_lokacije, $aktivan, $nova_sifra_hash, $id]);
-                } else {
-                    $stmt = $conn->prepare("
-        UPDATE korisnici 
-        SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?
-        WHERE id = ?
-    ");
-                    $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $prva_lokacija, $lokacije_json, $sve_lokacije, $aktivan, $id]);
-                }
+                $stmt = $conn->prepare("
+                    UPDATE korisnici 
+                    SET ime = ?, prezime = ?, email = ?, telefon = ?, tip_korisnika = ?, lokacija = ?, lokacije = ?, sve_lokacije = ?, aktivan = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([$ime, $prezime, $email, $telefon, $tip_korisnika, $lokacija, $lokacije_json, $sve_lokacije, $aktivan, $id]);
+                $uspeh = 'Korisnik uspešno ažuriran!';
             }
 
             // Osvezi podatke
@@ -147,6 +128,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
+
+// Pripremi trenutne lokacije za prikaz
+$trenutne_lokacije = [];
+if ($korisnik['sve_lokacije']) {
+    $trenutne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
+} elseif (!empty($korisnik['lokacije'])) {
+    $trenutne_lokacije = json_decode($korisnik['lokacije'], true);
+} else {
+    $trenutne_lokacije = [$korisnik['lokacija']];
+}
+
+// Postavi promenljive za header
+$page_title = 'Izmeni korisnika - ' . SITE_NAME;
+$base_url = '../../';
+
+// Include header POSLE svih provera i redirecta
+require_once '../../includes/header.php';
 ?>
 
     <div class="container">
@@ -168,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
 
         <div class="form-card">
-            <form method="POST" action="">
+            <form method="POST" action="" id="forma-korisnik">
 
                 <!-- OSNOVNI PODACI -->
                 <div class="form-section">
@@ -178,21 +176,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="form-group">
                             <label for="ime">Ime *</label>
                             <input
-                                type="text"
-                                id="ime"
-                                name="ime"
-                                required
-                                value="<?php echo e($korisnik['ime']); ?>"
+                                    type="text"
+                                    id="ime"
+                                    name="ime"
+                                    required
+                                    value="<?php echo e($korisnik['ime']); ?>"
                             >
                         </div>
 
                         <div class="form-group">
                             <label for="prezime">Prezime</label>
                             <input
-                                type="text"
-                                id="prezime"
-                                name="prezime"
-                                value="<?php echo e($korisnik['prezime']); ?>"
+                                    type="text"
+                                    id="prezime"
+                                    name="prezime"
+                                    value="<?php echo e($korisnik['prezime']); ?>"
                             >
                         </div>
                     </div>
@@ -201,99 +199,109 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="form-group">
                             <label for="email">Email</label>
                             <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value="<?php echo e($korisnik['email']); ?>"
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value="<?php echo e($korisnik['email']); ?>"
                             >
                         </div>
 
                         <div class="form-group">
                             <label for="telefon">Broj telefona</label>
                             <input
-                                type="tel"
-                                id="telefon"
-                                name="telefon"
-                                placeholder="npr. 061 123 4567"
-                                value="<?php echo e($korisnik['telefon']); ?>"
+                                    type="tel"
+                                    id="telefon"
+                                    name="telefon"
+                                    placeholder="npr. 061 123 4567"
+                                    value="<?php echo e($korisnik['telefon']); ?>"
                             >
                         </div>
                     </div>
                 </div>
 
-                <!-- TIP KORISNIKA I LOKACIJA -->
+                <!-- TIP KORISNIKA -->
                 <div class="form-section">
-                    <h2>⚙️ Podešavanja naloga</h2>
+                    <h2>⚙️ Tip korisnika</h2>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="tip_korisnika">Tip korisnika *</label>
-                            <select id="tip_korisnika" name="tip_korisnika" required>
-                                <?php if ($_SESSION['tip_korisnika'] == 'administrator'): ?>
-                                    <option value="administrator" <?php echo ($korisnik['tip_korisnika'] == 'administrator') ? 'selected' : ''; ?>>Administrator</option>
-                                    <option value="menadzer" <?php echo ($korisnik['tip_korisnika'] == 'menadzer') ? 'selected' : ''; ?>>Menadžer</option>
-                                <?php endif; ?>
-                                <option value="zaposleni" <?php echo ($korisnik['tip_korisnika'] == 'zaposleni') ? 'selected' : ''; ?>>Zaposleni</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="lokacija">Lokacije *</label>
-
-                            <?php if (in_array($korisnik['tip_korisnika'], ['administrator', 'menadzer'])): ?>
-                                <!-- Checkbox grupa za administratore i menadžere -->
-                                <?php
-                                $korisnik_lokacije = [];
-                                if ($korisnik['lokacije']) {
-                                    $korisnik_lokacije = json_decode($korisnik['lokacije'], true);
-                                } elseif ($korisnik['lokacija']) {
-                                    $korisnik_lokacije = [$korisnik['lokacija']];
-                                }
-                                ?>
-                                <div class="checkbox-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" name="lokacije[]" value="Ostružnica"
-                                            <?php echo (in_array('Ostružnica', $korisnik_lokacije)) ? 'checked' : ''; ?>>
-                                        <span>📍 Ostružnica</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" name="lokacije[]" value="Žarkovo"
-                                            <?php echo (in_array('Žarkovo', $korisnik_lokacije)) ? 'checked' : ''; ?>>
-                                        <span>📍 Žarkovo</span>
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" name="lokacije[]" value="Mirijevo"
-                                            <?php echo (in_array('Mirijevo', $korisnik_lokacije)) ? 'checked' : ''; ?>>
-                                        <span>📍 Mirijevo</span>
-                                    </label>
-                                </div>
-                                <small>Izaberite jednu ili više lokacija</small>
-
-                                <div class="form-group" style="margin-top: 15px;">
-                                    <label class="checkbox-label" style="border: none; padding: 0; background: transparent;">
-                                        <input type="checkbox" name="sve_lokacije" value="1"
-                                            <?php echo $korisnik['sve_lokacije'] ? 'checked' : ''; ?>>
-                                        <span>Pristup svim lokacijama</span>
-                                    </label>
-                                </div>
-                            <?php else: ?>
-                                <!-- Običan select za zaposlene -->
-                                <select id="lokacija" name="lokacija" required>
-                                    <option value="Ostružnica" <?php echo ($korisnik['lokacija'] == 'Ostružnica') ? 'selected' : ''; ?>>Ostružnica</option>
-                                    <option value="Žarkovo" <?php echo ($korisnik['lokacija'] == 'Žarkovo') ? 'selected' : ''; ?>>Žarkovo</option>
-                                    <option value="Mirijevo" <?php echo ($korisnik['lokacija'] == 'Mirijevo') ? 'selected' : ''; ?>>Mirijevo</option>
-                                </select>
-                                <small>Zaposleni može pristupiti samo jednoj lokaciji</small>
+                    <div class="form-group">
+                        <label for="tip_korisnika">Tip korisnika *</label>
+                        <select id="tip_korisnika" name="tip_korisnika" required onchange="promeniTipKorisnika()">
+                            <?php if ($_SESSION['tip_korisnika'] == 'administrator'): ?>
+                                <option value="administrator" <?php echo ($korisnik['tip_korisnika'] == 'administrator') ? 'selected' : ''; ?>>Administrator</option>
+                                <option value="menadzer" <?php echo ($korisnik['tip_korisnika'] == 'menadzer') ? 'selected' : ''; ?>>Menadžer</option>
                             <?php endif; ?>
+                            <option value="zaposleni" <?php echo ($korisnik['tip_korisnika'] == 'zaposleni') ? 'selected' : ''; ?>>Zaposleni</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- LOKACIJA - DINAMIČKI -->
+                <div class="form-section">
+                    <h2>📍 Lokacija</h2>
+
+                    <!-- Za zaposlene - single select -->
+                    <div id="zaposleni-lokacija" style="display: <?php echo ($korisnik['tip_korisnika'] == 'zaposleni') ? 'block' : 'none'; ?>;">
+                        <div class="form-group">
+                            <label for="lokacija">Lokacija *</label>
+                            <select id="lokacija" name="lokacija">
+                                <option value="">-- Izaberi lokaciju --</option>
+                                <option value="Ostružnica" <?php echo ($korisnik['lokacija'] == 'Ostružnica') ? 'selected' : ''; ?>>Ostružnica</option>
+                                <option value="Žarkovo" <?php echo ($korisnik['lokacija'] == 'Žarkovo') ? 'selected' : ''; ?>>Žarkovo</option>
+                                <option value="Mirijevo" <?php echo ($korisnik['lokacija'] == 'Mirijevo') ? 'selected' : ''; ?>>Mirijevo</option>
+                            </select>
+                            <small>Radnik može pregledati i dodavati vozila samo za svoju lokaciju</small>
                         </div>
                     </div>
+
+                    <!-- Za administratore i menadžere - checkboxes -->
+                    <div id="admin-lokacije" style="display: <?php echo ($korisnik['tip_korisnika'] != 'zaposleni') ? 'block' : 'none'; ?>;">
+                        <div class="form-group">
+                            <label>Dostupne lokacije *</label>
+                            <small style="display: block; margin-bottom: 10px;">Izaberite jednu ili više lokacija</small>
+
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="lokacije[]" value="Ostružnica" class="lokacija-checkbox"
+                                        <?php echo in_array('Ostružnica', $trenutne_lokacije) ? 'checked' : ''; ?>
+                                        <?php echo $korisnik['sve_lokacije'] ? 'disabled' : ''; ?>>
+                                    <span>📍 Ostružnica</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="lokacije[]" value="Žarkovo" class="lokacija-checkbox"
+                                        <?php echo in_array('Žarkovo', $trenutne_lokacije) ? 'checked' : ''; ?>
+                                        <?php echo $korisnik['sve_lokacije'] ? 'disabled' : ''; ?>>
+                                    <span>📍 Žarkovo</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="lokacije[]" value="Mirijevo" class="lokacija-checkbox"
+                                        <?php echo in_array('Mirijevo', $trenutne_lokacije) ? 'checked' : ''; ?>
+                                        <?php echo $korisnik['sve_lokacije'] ? 'disabled' : ''; ?>>
+                                    <span>📍 Mirijevo</span>
+                                </label>
+                            </div>
+
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+                                <label class="checkbox-label" style="background: #e7f3ff; border-color: #2196f3;">
+                                    <input type="checkbox" name="sve_lokacije" id="sve_lokacije" onchange="toggleSveLokacije()"
+                                        <?php echo $korisnik['sve_lokacije'] ? 'checked' : ''; ?>>
+                                    <span style="font-weight: 600; color: #0066cc;">✓ Pristup svim lokacijama</span>
+                                </label>
+                                <small style="display: block; margin-top: 5px; color: #666;">Preporučeno za administratore</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATUS -->
+                <div class="form-section">
+                    <h2>📊 Status naloga</h2>
 
                     <div class="form-group">
                         <label class="checkbox-label" style="border: none; padding: 0; background: transparent;">
                             <input
-                                type="checkbox"
-                                name="aktivan"
-                                value="1"
+                                    type="checkbox"
+                                    name="aktivan"
+                                    value="1"
                                 <?php echo $korisnik['aktivan'] ? 'checked' : ''; ?>
                             >
                             <span>Nalog je aktivan</span>
@@ -346,8 +354,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                 </div>
 
-
-
                 <!-- DUGMAD -->
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary btn-lg">
@@ -361,6 +367,84 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
         </div>
     </div>
+
+    <style>
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-label:hover {
+            background: #e9ecef;
+            border-color: #FF411C;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + span {
+            font-weight: 600;
+            color: #FF411C;
+        }
+
+        .checkbox-label input[type="checkbox"]:disabled {
+            opacity: 0.5;
+        }
+    </style>
+
     <script src="<?php echo $base_url; ?>assets/js/prikaz-sifre.js"></script>
+
+    <script>
+        // Prikaži/sakrij polja za lokaciju na osnovu tipa korisnika
+        function promeniTipKorisnika() {
+            const tipKorisnika = document.getElementById('tip_korisnika').value;
+            const zaposleniLokacija = document.getElementById('zaposleni-lokacija');
+            const adminLokacije = document.getElementById('admin-lokacije');
+            const lokacijaSelect = document.getElementById('lokacija');
+
+            if (tipKorisnika === 'zaposleni') {
+                zaposleniLokacija.style.display = 'block';
+                adminLokacije.style.display = 'none';
+                lokacijaSelect.setAttribute('required', 'required');
+            } else {
+                zaposleniLokacija.style.display = 'none';
+                adminLokacije.style.display = 'block';
+                lokacijaSelect.removeAttribute('required');
+            }
+        }
+
+        // Toggle "Sve lokacije" checkbox
+        function toggleSveLokacije() {
+            const sveLokacije = document.getElementById('sve_lokacije');
+            const checkboxes = document.querySelectorAll('.lokacija-checkbox');
+
+            if (sveLokacije.checked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                });
+            } else {
+                checkboxes.forEach(cb => {
+                    cb.disabled = false;
+                });
+            }
+        }
+    </script>
 
 <?php require_once '../../includes/footer.php'; ?>

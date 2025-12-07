@@ -1,13 +1,15 @@
 <?php
-$base_url = '../../';
 require_once '../../config.php';
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 require_once '../../includes/functions.php';
-require_once '../../includes/header.php';
 
 // Samo administrator i menadžer mogu pristupiti
 proveri_tip(['administrator', 'menadzer']);
+
+// Postavi promenljive za header
+$page_title = 'Korisnici - ' . SITE_NAME;
+$base_url = '../../';
 
 $uspeh = $_SESSION['uspeh'] ?? '';
 $greska = $_SESSION['greska'] ?? '';
@@ -46,6 +48,9 @@ $sql .= " ORDER BY datum_kreiranja DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $korisnici = $stmt->fetchAll();
+
+// Include header POSLE svih provera
+require_once '../../includes/header.php';
 ?>
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/responsive-tables.css">
 
@@ -111,8 +116,8 @@ $korisnici = $stmt->fetchAll();
             </div>
         <?php endif; ?>
 
-
         <div class="scroll-hint">← Scroll levo/desno da vidiš sve →</div>
+
         <!-- TABELA -->
         <div class="table-container">
             <div class="table-wrapper">
@@ -155,12 +160,13 @@ $korisnici = $stmt->fetchAll();
                                 </td>
                                 <td>
                                     <?php
+                                    // Prikaži lokacije
                                     if ($k['sve_lokacije']) {
-                                        echo '<span class="badge-lokacija" style="background: #667eea; color: white;">Sve lokacije</span>';
+                                        echo '<span class="badge-lokacija" style="background: #9c27b0; color: white;">Sve lokacije</span>';
                                     } elseif (!empty($k['lokacije'])) {
-                                        $lokacije_array = json_decode($k['lokacije'], true);
-                                        foreach ($lokacije_array as $lok) {
-                                            echo '<span class="badge-lokacija" style="margin: 2px;">' . e($lok) . '</span> ';
+                                        $lokacije = json_decode($k['lokacije'], true);
+                                        foreach ($lokacije as $lok) {
+                                            echo '<span class="badge-lokacija" style="margin-right: 5px;">' . e($lok) . '</span>';
                                         }
                                     } else {
                                         echo '<span class="badge-lokacija">' . e($k['lokacija']) . '</span>';

@@ -15,11 +15,25 @@ $include_camera_js = true;
 $greska = '';
 $uspeh = '';
 
+// Preuzmi dostupne lokacije za trenutnog korisnika
+$dostupne_lokacije = get_korisnik_lokacije();
+$tip_korisnika = $_SESSION['tip_korisnika'];
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validacija
     $registracija = trim($_POST['registracija'] ?? '');
     $sasija = trim($_POST['sasija'] ?? '');
     $marka = trim($_POST['marka'] ?? '');
+
+    // LOKACIJA VOZILA - NOVA LOGIKA
+    $lokacija_vozila = $_POST['lokacija_vozila'] ?? '';
+
+    // Validacija lokacije
+    if (empty($lokacija_vozila)) {
+        $greska = 'Molimo izaberite lokaciju vozila.';
+    } elseif (!in_array($lokacija_vozila, $dostupne_lokacije)) {
+        $greska = 'Nemate pristup izabranoj lokaciji!';
+    }
 
     // TIP KLIJENTA - NOVO
     $tip_klijenta = $_POST['tip_klijenta'] ?? 'fizicko';
@@ -83,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($greska)) {
         if (empty($registracija) || empty($marka) || empty($parking_lokacija)) {
             $greska = 'Molimo popunite sva obavezna polja.';
-        } elseif (empty($usluge) && empty($custom_usluga_naziv)) {
+        } elseif (empty($usluge) && empty($custom_usluge)) {
             $greska = 'Molimo izaberite bar jednu uslugu ili unesite custom uslugu.';
         } else {
             // Upload slike
@@ -131,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $cena,
                     $napomena,
                     $_SESSION['korisnik_id'],
-                    $_SESSION['lokacija']
+                    $lokacija_vozila, // KORISTI IZABRANU LOKACIJU
                 ]);
 
                 $uspeh = 'Vozilo uspešno dodato!';
@@ -173,6 +187,38 @@ include '../../includes/header.php';
 
         <div class="form-card">
             <form method="POST" enctype="multipart/form-data" id="forma-vozilo">
+
+                <!-- LOKACIJA VOZILA - NOVA SEKCIJA -->
+                <div class="form-section">
+                    <h2>📍 Lokacija vozila</h2>
+
+                    <?php if ($tip_korisnika == 'zaposleni'): ?>
+                        <!-- Zaposleni - automatski defaultna lokacija -->
+                        <div class="info-box">
+                            <strong>Vaša lokacija:</strong> <?php echo htmlspecialchars($dostupne_lokacije[0]); ?>
+                            <br><small>Zaposleni dodaju vozila samo za svoju lokaciju</small>
+                        </div>
+                        <input type="hidden" name="lokacija_vozila" value="<?php echo htmlspecialchars($dostupne_lokacije[0]); ?>">
+
+                    <?php else: ?>
+                        <!-- Menadžer/Administrator - dropdown -->
+                        <div class="form-group">
+                            <label for="lokacija_vozila">Izaberite lokaciju *</label>
+                            <select id="lokacija_vozila" name="lokacija_vozila" required>
+                                <option value="">-- Izaberite lokaciju --</option>
+                                <?php foreach ($dostupne_lokacije as $lok): ?>
+                                    <option value="<?php echo htmlspecialchars($lok); ?>"
+                                        <?php echo (($_POST['lokacija_vozila'] ?? '') == $lok) ? 'selected' : ''; ?>>
+                                        📍 <?php echo htmlspecialchars($lok); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small>
+                                Vaše dodeljene lokacije: <strong><?php echo implode(', ', $dostupne_lokacije); ?></strong>
+                            </small>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <!-- TIP KLIJENTA - NOVO -->
                 <div class="form-section">
@@ -442,7 +488,7 @@ include '../../includes/header.php';
                     </div>
 
                     <button type="button" onclick="addCustomUsluga()" class="btn-add-custom">
-                        ➕ Dodaj još jednu specifičnu uslugu
+                        ➕ Dodaj još jednu custom uslugu
                     </button>
                 </div>
 

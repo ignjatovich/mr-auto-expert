@@ -17,9 +17,18 @@ $lokacija_korisnika = $_SESSION['lokacija'];
 
 // Određivanje koje lokacije korisnik može da vidi
 $dostupne_lokacije = [];
-if ($tip == 'administrator') {
-    $dostupne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
+if ($tip == 'administrator' || $tip == 'menadzer') {
+    // Koristi nove SESSION lokacije
+    if (isset($_SESSION['sve_lokacije']) && $_SESSION['sve_lokacije']) {
+        $dostupne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
+    } elseif (isset($_SESSION['lokacije']) && is_array($_SESSION['lokacije'])) {
+        $dostupne_lokacije = $_SESSION['lokacije'];
+    } else {
+        // Fallback na staru lokaciju
+        $dostupne_lokacije = [$lokacija_korisnika];
+    }
 } else {
+    // Zaposleni vide samo svoju lokaciju
     $dostupne_lokacije = [$lokacija_korisnika];
 }
 
@@ -38,7 +47,7 @@ if ($tip == 'zaposleni' && empty($filter_lokacija)) {
     $filter_lokacija = $lokacija_korisnika;
 }
 
-// Query za preuzimanje vozila - AŽURIRANO
+// Query za preuzimanje vozila
 $sql = "SELECT v.*, k.ime, k.prezime, pl.naziv as pravno_lice_naziv
         FROM vozila v 
         LEFT JOIN korisnici k ON v.kreirao_korisnik_id = k.id 
@@ -112,13 +121,16 @@ include 'includes/header.php';
                         <div class="form-group">
                             <label for="lokacija">Lokacija</label>
                             <select name="lokacija" id="lokacija" onchange="this.form.submit()">
-                                <option value="">Sve lokacije</option>
+                                <option value="">Sve dostupne lokacije</option>
                                 <?php foreach ($dostupne_lokacije as $lok): ?>
                                     <option value="<?php echo $lok; ?>" <?php echo ($filter_lokacija == $lok) ? 'selected' : ''; ?>>
                                         <?php echo $lok; ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                Vaše dodeljene lokacije: <?php echo implode(', ', $dostupne_lokacije); ?>
+                            </small>
                         </div>
                     <?php endif; ?>
 
