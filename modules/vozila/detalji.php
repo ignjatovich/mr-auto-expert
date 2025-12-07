@@ -92,8 +92,18 @@ if (!empty($vozilo['custom_usluge'])) {
             <h1>🚗 Detalji vozila: <?php echo e($vozilo['registracija']); ?></h1>
             <div>
                 <a href="../../lista_vozila.php" class="btn btn-secondary">← Nazad na listu</a>
-                <?php if ($_SESSION['tip_korisnika'] != 'zaposleni'): ?>
+                <?php
+                $moze_menjati = false;
+                if ($_SESSION['tip_korisnika'] == 'administrator' || $_SESSION['tip_korisnika'] == 'menadzer') {
+                    $moze_menjati = true; // Admin i menadžer mogu menjati SVA vozila
+                } elseif ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] == $_SESSION['korisnik_id']) {
+                    $moze_menjati = true; // Zaposleni mogu menjati SAMO SVOJA vozila
+                }
+
+                if ($moze_menjati):
+                    ?>
                     <a href="izmeni.php?id=<?php echo $id; ?>" class="btn btn-primary">✏️ Izmeni</a>
+                    <button onclick="obrisiVozilo(<?php echo $id; ?>, '<?php echo e($vozilo['registracija']); ?>')" class="btn btn-danger">🗑️ Obriši</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -223,14 +233,18 @@ if (!empty($vozilo['custom_usluge'])) {
                         </li>
                     <?php endforeach; ?>
 
-                    <?php if ($custom_usluge): ?>
-                        <li style="border-left-color: #FF411C;">
-                        <span class="usluga-naziv">
-                            <?php echo e($custom_usluge['naziv']); ?>
-                            <span style="font-size: 11px; background: #FF411C; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">CUSTOM</span>
-                        </span>
-                            <span class="usluga-cena"><?php echo number_format($custom_usluge['cena'], 2, ',', '.'); ?> RSD</span>
-                        </li>
+                    <?php if ($custom_usluge && is_array($custom_usluge)): ?>
+                        <?php foreach ($custom_usluge as $cu): ?>
+                            <?php if (isset($cu['naziv']) && isset($cu['cena'])): ?>
+                                <li style="border-left-color: #FF411C;">
+                                <span class="usluga-naziv">
+                                    <?php echo e($cu['naziv']); ?>
+                                    <span style="font-size: 11px; background: #FF411C; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">CUSTOM</span>
+                                </span>
+                                    <span class="usluga-cena"><?php echo number_format($cu['cena'], 2, ',', '.'); ?> RSD</span>
+                                </li>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </ul>
             <?php endif; ?>
@@ -285,5 +299,13 @@ if (!empty($vozilo['custom_usluge'])) {
         </div>
 
     </div>
+
+    <script>
+        function obrisiVozilo(id, registracija) {
+            if (confirm('Da li ste sigurni da želite da obrišete vozilo ' + registracija + '?\n\nOva akcija se ne može poništiti!')) {
+                window.location.href = 'obrisi.php?id=' + id;
+            }
+        }
+    </script>
 
 <?php require_once '../../includes/footer.php'; ?>

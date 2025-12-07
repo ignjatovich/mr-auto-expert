@@ -11,8 +11,8 @@ require_once '../../includes/header.php';
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/camera.css">
 <?php
 
-// Samo administrator i menadžer mogu da izmene vozila
-proveri_tip(['administrator', 'menadzer']);
+// SVI korisnici mogu da izmene vozila, ali zaposleni samo svoja
+proveri_login();
 
 $id = $_GET['id'] ?? 0;
 $greska = '';
@@ -38,6 +38,23 @@ $vozilo = $stmt->fetch();
 
 if (!$vozilo) {
     $_SESSION['greska'] = 'Vozilo ne postoji!';
+    header('Location: ../../lista_vozila.php');
+    exit();
+}
+
+// Provera pristupa - zaposleni mogu menjati SAMO SVOJA vozila
+if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
+    $_SESSION['greska'] = 'Nemate pristup ovom vozilu! Možete menjati samo vozila koja ste Vi dodali.';
+    header('Location: ../../lista_vozila.php');
+    exit();
+}
+header('Location: ../../lista_vozila.php');
+exit();
+}
+
+// Provera pristupa - zaposleni mogu samo svoja vozila
+if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
+    $_SESSION['greska'] = 'Nemate pravo da izmenite ovo vozilo!';
     header('Location: ../../lista_vozila.php');
     exit();
 }

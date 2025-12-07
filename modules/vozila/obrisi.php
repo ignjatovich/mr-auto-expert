@@ -3,8 +3,8 @@ require_once '../../config.php';
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 
-// Samo administrator i menadžer mogu da brišu
-proveri_tip(['administrator', 'menadzer']);
+// Provera login-a
+proveri_login();
 
 $id = $_GET['id'] ?? 0;
 
@@ -20,6 +20,18 @@ $vozilo = $stmt->fetch();
 
 if (!$vozilo) {
     $_SESSION['greska'] = 'Vozilo ne postoji!';
+    header('Location: ../../lista_vozila.php');
+    exit();
+}
+
+// Provera pristupa
+// - Administrator i menadžer mogu brisati SVA vozila
+// - Zaposleni mogu brisati SAMO SVOJA vozila
+$tip = $_SESSION['tip_korisnika'];
+$korisnik_id = $_SESSION['korisnik_id'];
+
+if ($tip == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $korisnik_id) {
+    $_SESSION['greska'] = 'Nemate pristup ovom vozilu! Možete brisati samo vozila koja ste Vi dodali.';
     header('Location: ../../lista_vozila.php');
     exit();
 }

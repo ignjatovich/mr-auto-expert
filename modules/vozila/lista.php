@@ -142,11 +142,11 @@ $placeno = $stats['placeno'] ?? 0;
             <div class="filter-group">
                 <label for="search">🔍 Pretraga</label>
                 <input
-                    type="text"
-                    id="search"
-                    name="search"
-                    placeholder="Registracija, marka, vlasnik..."
-                    value="<?php echo e($search); ?>"
+                        type="text"
+                        id="search"
+                        name="search"
+                        placeholder="Registracija, marka, vlasnik..."
+                        value="<?php echo e($search); ?>"
                 >
             </div>
 

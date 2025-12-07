@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $tip_klijenta = $_POST['tip_klijenta'] ?? 'fizicko';
     $pravno_lice_id = null;
     $vlasnik = '';
+    $kontakt_osoba = ''; // Inicijalizacija
 
     if ($tip_klijenta == 'pravno') {
         $pravno_lice_id = intval($_POST['pravno_lice_id'] ?? 0);

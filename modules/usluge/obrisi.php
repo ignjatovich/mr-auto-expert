@@ -3,8 +3,8 @@ require_once '../../config.php';
 require_once '../../includes/db.php';
 require_once '../../includes/auth.php';
 
-// Samo administrator i menadžer mogu pristupiti
-proveri_tip(['administrator', 'menadzer']);
+// SVI korisnici mogu da brišu usluge
+proveri_login();
 
 $id = $_GET['id'] ?? 0;
 
