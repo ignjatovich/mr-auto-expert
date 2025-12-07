@@ -103,25 +103,6 @@ include 'includes/header.php';
             <a href="modules/vozila/dodaj.php" class="btn btn-primary">➕ Dodaj vozilo</a>
         </div>
 
-        <!-- Statistika -->
-        <div class="stats-grid">
-            <div class="stat-card u-radu">
-                <h4>U radu</h4>
-                <div class="number"><?php echo $stats['u_radu']; ?></div>
-            </div>
-            <div class="stat-card zavrseno">
-                <h4>Završeno</h4>
-                <div class="number"><?php echo $stats['zavrseno']; ?></div>
-            </div>
-            <div class="stat-card placeno">
-                <h4>Plaćeno</h4>
-                <div class="number"><?php echo $stats['placeno']; ?></div>
-            </div>
-            <div class="stat-card ukupno">
-                <h4>Ukupno</h4>
-                <div class="number"><?php echo $stats['ukupno']; ?></div>
-            </div>
-        </div>
 
         <!-- Filteri -->
         <div class="filter-section">
@@ -170,6 +151,47 @@ include 'includes/header.php';
             </form>
         </div>
 
+        <?php
+        // Prikaz primenjenih filtera ispod forme
+        $aktivni_filteri = [];
+        if (!empty($filter_lokacija)) {
+            $aktivni_filteri[] = 'Lokacija: ' . htmlspecialchars($filter_lokacija);
+        }
+        if (!empty($filter_status)) {
+            $aktivni_filteri[] = 'Status: ' . get_status_text($filter_status);
+        }
+        if (!empty($filter_pretraga)) {
+            $aktivni_filteri[] = 'Pretraga: "' . htmlspecialchars($filter_pretraga) . '"';
+        }
+
+        if (!empty($aktivni_filteri)) {
+            echo '<div class="applied-filters"><strong>Primenjeni filteri:</strong> ' . implode(' | ', $aktivni_filteri) . '</div>';
+        }
+        ?>
+
+        <!-- Statistika -->
+        <div class="stats-grid">
+            <div class="stat-card u-radu">
+                <h4>U radu</h4>
+                <div class="number"><?php echo $stats['u_radu']; ?></div>
+            </div>
+            <div class="stat-card zavrseno">
+                <h4>Završeno</h4>
+                <div class="number"><?php echo $stats['zavrseno']; ?></div>
+            </div>
+            <div class="stat-card placeno">
+                <h4>Plaćeno</h4>
+                <div class="number"><?php echo $stats['placeno']; ?></div>
+            </div>
+            <div class="stat-card ukupno">
+                <h4>Ukupno</h4>
+                <div class="number"><?php echo $stats['ukupno']; ?></div>
+            </div>
+        </div>
+
+
+
+
         <!-- Scroll hint -->
         <div class="scroll-hint">
             ← Scroll levo/desno da vidiš sve kolone →
@@ -191,7 +213,6 @@ include 'includes/header.php';
                             <th>Slika</th>
                             <th>Registracija</th>
                             <th>Marka</th>
-                            <th>Tip klijenta</th>
                             <th>Vlasnik/Firma</th>
                             <th>Kontakt</th>
                             <th>Datum prijema</th>
@@ -215,13 +236,7 @@ include 'includes/header.php';
                                 </td>
                                 <td><strong><?php echo htmlspecialchars($vozilo['registracija']); ?></strong></td>
                                 <td><?php echo htmlspecialchars($vozilo['marka']); ?></td>
-                                <td>
-                                    <?php if ($vozilo['tip_klijenta'] == 'pravno'): ?>
-                                        <span style="color: #FF411C; font-weight: 600;">🏢 Pravno</span>
-                                    <?php else: ?>
-                                        <span style="color: #666;">👤 Fizičko</span>
-                                    <?php endif; ?>
-                                </td>
+
                                 <td>
                                     <?php
                                     if ($vozilo['tip_klijenta'] == 'pravno' && $vozilo['pravno_lice_naziv']) {
@@ -233,7 +248,7 @@ include 'includes/header.php';
                                 </td>
                                 <td><?php echo htmlspecialchars($vozilo['kontakt']); ?></td>
                                 <td><?php echo formatuj_datum($vozilo['datum_prijema']); ?></td>
-                                <td><?php echo htmlspecialchars($vozilo['lokacija']); ?></td>
+                                <td>📍<?php echo htmlspecialchars($vozilo['lokacija']); ?></td>
                                 <td>
                             <span class="status-badge status-<?php echo $vozilo['status']; ?>">
                                 <?php echo get_status_text($vozilo['status']); ?>
@@ -244,12 +259,12 @@ include 'includes/header.php';
                                     <div class="action-buttons">
                                         <a href="modules/vozila/detalji.php?id=<?php echo $vozilo['id']; ?>"
                                            class="btn-action btn-view">
-                                            👁️ Vidi
+                                            Vidi detalje
                                         </a>
-                                        <?php if ($tip == 'administrator' || $tip == 'menadzer'): ?>
+                                        <?php if ($tip == 'administrator' || $tip == 'menadzer' || $tip == 'zaposleni'): ?>
                                             <button onclick="obrisiVozilo(<?php echo $vozilo['id']; ?>, '<?php echo htmlspecialchars($vozilo['registracija'], ENT_QUOTES); ?>')"
                                                     class="btn-action btn-delete">
-                                                🗑️ Obriši
+                                                🗑️
                                             </button>
                                         <?php endif; ?>
                                     </div>
@@ -319,6 +334,11 @@ include 'includes/header.php';
             .stat-card .number {
                 font-size: 24px;
             }
+        }
+
+        .status-u_radu {
+            background-color: #dc3545;
+            color: white !important;
         }
     </style>
 

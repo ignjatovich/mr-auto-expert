@@ -43,21 +43,21 @@ if (!$vozilo) {
 }
 
 // Provera pristupa - zaposleni mogu menjati SAMO SVOJA vozila
-if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
-    $_SESSION['greska'] = 'Nemate pristup ovom vozilu! Možete menjati samo vozila koja ste Vi dodali.';
-    header('Location: ../../lista_vozila.php');
-    exit();
-}
-header('Location: ../../lista_vozila.php');
-exit();
-}
+//if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
+//    $_SESSION['greska'] = 'Nemate pristup ovom vozilu! Možete menjati samo vozila koja ste Vi dodali.';
+//    header('Location: ../../lista_vozila.php');
+//    exit();
+//}
+//header('Location: ../../lista_vozila.php');
+//exit();
+//}
 
 // Provera pristupa - zaposleni mogu samo svoja vozila
-if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
-    $_SESSION['greska'] = 'Nemate pravo da izmenite ovo vozilo!';
-    header('Location: ../../lista_vozila.php');
-    exit();
-}
+//if ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] != $_SESSION['korisnik_id']) {
+//    $_SESSION['greska'] = 'Nemate pravo da izmenite ovo vozilo!';
+//    header('Location: ../../lista_vozila.php');
+//    exit();
+//}
 
 // Dekoduj usluge - pazi na stare i nove formate
 $trenutne_usluge = json_decode($vozilo['usluge'], true);

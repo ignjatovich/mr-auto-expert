@@ -8,7 +8,7 @@
     color: #FFFFFF;
     font-weight: 600;
 ">
-    Mr Auto Expert DOO
+    MR AUTO EXPERT DOO
 </footer>
 
 <!-- Footer scripts -->

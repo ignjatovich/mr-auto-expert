@@ -142,12 +142,12 @@ include '../../includes/header.php';
                             <td>
                                 <div class="action-buttons">
                                     <a href="izmeni.php?id=<?php echo $firma['id']; ?>"
-                                       class="btn-action btn-view">
+                                       class="btn-table btn-edit">
                                         ✏️ Izmeni
                                     </a>
                                     <button onclick="obrisiPravnoLice(<?php echo $firma['id']; ?>, '<?php echo htmlspecialchars($firma['naziv'], ENT_QUOTES); ?>')"
                                             class="btn-action btn-delete">
-                                        🗑️ Obriši
+                                        🗑️
                                     </button>
                                 </div>
                             </td>

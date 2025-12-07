@@ -62,7 +62,7 @@ if ($tip != 'zaposleni') {
     <div class="container">
         <div class="welcome-section">
             <h1>Dobrodošli, <?php echo htmlspecialchars($ime); ?>! 👋</h1>
-            <p>Lokacija: <strong><?php echo htmlspecialchars($lokacija); ?></strong></p>
+            <p>Lokacija: 📍<strong><?php echo htmlspecialchars($lokacija); ?></strong></p>
         </div>
 
         <div class="dashboard-grid">

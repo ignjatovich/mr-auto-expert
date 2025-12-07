@@ -1,11 +1,13 @@
 <?php
-require_once '../../config.php';
-require_once '../../includes/db.php';
-require_once '../../includes/auth.php';
-require_once '../../includes/functions.php';
+$base_url = '../../';
+require_once $base_url . 'config.php';
+require_once $base_url . 'includes/db.php';
+require_once $base_url . 'includes/auth.php';
+require_once $base_url . 'includes/functions.php';
+require_once $base_url . 'includes/header.php';
 
-// Samo administrator i menadžer mogu pristupiti
-proveri_tip(['administrator', 'menadzer']);
+// Samo administrator, menadžer i zaposleni mogu pristupiti
+proveri_tip(['administrator', 'menadzer', 'zaposleni']);
 
 $id = $_GET['id'] ?? 0;
 $greska = '';
@@ -50,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $uspeh = 'Usluga je uspešno izmenjena!';
 
-            // Osvezi podatke
+            // Osveži podatke
             $stmt = $conn->prepare("SELECT * FROM usluge WHERE id = ?");
             $stmt->execute([$id]);
             $usluga = $stmt->fetch();
@@ -58,49 +60,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="sr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Izmeni uslugu - <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-<nav class="navbar">
-    <div class="nav-container">
-        <div class="nav-brand">
-            <a href="../../dashboard.php" style="color: inherit; text-decoration: none;">
-                🚗 Tehnički pregled
-            </a>
-        </div>
-        <div class="nav-menu">
-            <span class="nav-user">
-                <?php echo e($_SESSION['ime'] . ' ' . $_SESSION['prezime']); ?>
-                <span class="badge badge-<?php echo $_SESSION['tip_korisnika']; ?>">
-                    <?php echo ucfirst($_SESSION['tip_korisnika']); ?>
-                </span>
-            </span>
-            <a href="../../logout.php" class="btn btn-secondary btn-sm">Odjavi se</a>
-        </div>
-    </div>
-</nav>
+
+<link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/style.css">
+<link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/header.css">
+
 
 <div class="container">
     <div class="page-header">
-        <h1>✏️ Izmeni uslugu: <?php echo e($usluga['naziv']); ?></h1>
+        <h1>✏️ Izmeni uslugu: <?php echo htmlspecialchars($usluga['naziv']); ?></h1>
         <a href="lista.php" class="btn btn-secondary">← Nazad na listu</a>
     </div>
 
     <?php if ($greska): ?>
         <div class="alert alert-error">
-            <?php echo e($greska); ?>
+            <?php echo htmlspecialchars($greska); ?>
         </div>
     <?php endif; ?>
 
     <?php if ($uspeh): ?>
         <div class="alert alert-success">
-            <?php echo e($uspeh); ?>
+            <?php echo htmlspecialchars($uspeh); ?>
         </div>
     <?php endif; ?>
 
@@ -113,27 +92,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label for="naziv">Naziv usluge *</label>
                     <input
-                        type="text"
-                        id="naziv"
-                        name="naziv"
-                        required
-                        placeholder="npr. Tehnički pregled"
-                        value="<?php echo e($usluga['naziv']); ?>"
-                        autofocus
+                            type="text"
+                            id="naziv"
+                            name="naziv"
+                            required
+                            placeholder="npr. Tehnički pregled"
+                            value="<?php echo htmlspecialchars($usluga['naziv']); ?>"
+                            autofocus
                     >
                 </div>
 
                 <div class="form-group">
                     <label for="cena">Cena (RSD) *</label>
                     <input
-                        type="number"
-                        id="cena"
-                        name="cena"
-                        step="0.01"
-                        min="0"
-                        required
-                        placeholder="0.00"
-                        value="<?php echo e($usluga['cena']); ?>"
+                            type="number"
+                            id="cena"
+                            name="cena"
+                            step="0.01"
+                            min="0"
+                            required
+                            placeholder="0.00"
+                            value="<?php echo htmlspecialchars($usluga['cena']); ?>"
                     >
                     <small>Unesite cenu usluge u dinarima</small>
                 </div>
@@ -141,9 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <div class="form-group">
                     <label class="checkbox-label" style="border: none; padding: 0; background: transparent;">
                         <input
-                            type="checkbox"
-                            name="aktivan"
-                            value="1"
+                                type="checkbox"
+                                name="aktivan"
+                                value="1"
                             <?php echo $usluga['aktivan'] ? 'checked' : ''; ?>
                         >
                         <span>Usluga je aktivna (prikazuje se pri dodavanju vozila)</span>
@@ -171,5 +150,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
     </div>
 </div>
-</body>
-</html>
+
+<?php require_once $base_url . 'includes/footer.php'; ?>

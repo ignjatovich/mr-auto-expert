@@ -288,7 +288,7 @@
 
 /* Primary Mobile Link */
 .mobile-link-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    background-color: #667eea !important;
     color: var(--white);
     font-weight: 600;
     margin: 10px;
@@ -298,7 +298,7 @@
 }
 
 .mobile-link-primary:hover {
-    background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-dark) 100%);
+    background-color: #5568d3;
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(255, 65, 28, 0.4);
     color: var(--white);

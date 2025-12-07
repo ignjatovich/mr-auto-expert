@@ -15,11 +15,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sifra = $_POST['sifra'] ?? '';
 
     if (empty($korisnicko_ime) || empty($sifra)) {
-        $greska = 'Molimo unesite korisničko ime i šifru.';
+        $greska = 'Molimo unesite korisničko ime (ili email) i šifru.';
     } else {
-        // Provera korisnika u bazi
-        $stmt = $conn->prepare("SELECT * FROM korisnici WHERE korisnicko_ime = ? AND aktivan = 1");
-        $stmt->execute([$korisnicko_ime]);
+        // Pretraga po korisničkom imenu ili email adresi
+        $stmt = $conn->prepare("
+            SELECT * FROM korisnici 
+            WHERE (korisnicko_ime = ? OR email = ?) 
+              AND aktivan = 1
+        ");
+        $stmt->execute([$korisnicko_ime, $korisnicko_ime]);
         $korisnik = $stmt->fetch();
 
         if ($korisnik && password_verify($sifra, $korisnik['sifra'])) {
@@ -34,10 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Location: dashboard.php');
             exit();
         } else {
-            $greska = 'Pogrešno korisničko ime ili šifra.';
+            $greska = 'Pogrešno korisničko ime/email ili šifra.';
         }
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="sr">
@@ -46,12 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prijava - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/login.css">
+
 </head>
 <body class="login-page">
 <div class="login-container">
     <div class="login-box">
         <div class="login-header">
-            <h1>🚗 Tehnički pregled</h1>
+            <h1>🚗 Mr Auto Expert DOO</h1>
             <p>Prijavite se na sistem</p>
         </div>
 
@@ -63,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <form method="POST" action="" class="login-form">
             <div class="form-group">
-                <label for="korisnicko_ime">Korisničko ime</label>
+                <label for="korisnicko_ime">Korisničko ime ili email adresa</label>
                 <input
                     type="text"
                     id="korisnicko_ime"
@@ -90,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
 
         <div class="login-footer">
-            <p>Test nalog: <strong>admin</strong> / <strong>admin123</strong></p>
+            <p><strong></strong> / <strong></strong></p>
         </div>
     </div>
 </div>

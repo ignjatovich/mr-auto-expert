@@ -195,7 +195,6 @@ body {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    margin-left: 8px;
 }
 
 .badge-administrator {
@@ -215,9 +214,9 @@ body {
 
 /* CONTAINER */
 .container {
-    max-width: 1200px;
+    max-width: 1340px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 20px 20px;
 }
 
 .welcome-section {
@@ -646,7 +645,7 @@ tbody tr:hover {
 @media (max-width: 768px) {
     /* Container */
     .container {
-        padding: 0 15px;
+        padding: 20px 15px;
     }
 
     /* Navbar */
@@ -735,7 +734,7 @@ tbody tr:hover {
 
     .btn-action {
         padding: 8px;
-        font-size: 16px;
+        font-size: 13px;
         min-width: 36px;
         min-height: 36px;
         display: inline-flex;
@@ -844,3 +843,36 @@ tbody tr:hover {
         font-size: 16px; /* Prevents zoom on iOS */
     }
 }
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b81524;
+    color: white;
+}
+
+
+.btn-add-custom {
+    margin-top: 25px;
+    background-color: #FF411C !important;
+}
+
+
+.btn-delete {
+    border: none;
+    cursor: pointer;
+}
+
+.applied-filters {
+    margin: 15px 0;
+    font-size: 14px;
+    color: #555;
+}
+.applied-filters strong {
+    color: #FF411C;
+}
+
+

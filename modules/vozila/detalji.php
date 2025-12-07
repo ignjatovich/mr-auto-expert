@@ -96,9 +96,10 @@ if (!empty($vozilo['custom_usluge'])) {
                 $moze_menjati = false;
                 if ($_SESSION['tip_korisnika'] == 'administrator' || $_SESSION['tip_korisnika'] == 'menadzer') {
                     $moze_menjati = true; // Admin i menadžer mogu menjati SVA vozila
-                } elseif ($_SESSION['tip_korisnika'] == 'zaposleni' && $vozilo['kreirao_korisnik_id'] == $_SESSION['korisnik_id']) {
-                    $moze_menjati = true; // Zaposleni mogu menjati SAMO SVOJA vozila
-                }
+                } elseif ($_SESSION['tip_korisnika'] == 'zaposleni') {
+                    $moze_menjati = true;
+}
+
 
                 if ($moze_menjati):
                     ?>

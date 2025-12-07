@@ -84,7 +84,7 @@ $usluge = $stmt->fetchAll();
                                 <td>
                                     <div class="action-buttons-table">
                                         <a href="izmeni.php?id=<?php echo $usluga['id']; ?>" class="btn-table btn-edit" title="Izmeni">
-                                            ✏️
+                                            ✏️ Izmeni
                                         </a>
                                         <button onclick="obrisiUslugu(<?php echo $usluga['id']; ?>, '<?php echo e($usluga['naziv']); ?>')" class="btn-table btn-delete" title="Obriši">
                                             🗑️

@@ -32,7 +32,7 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
         <!-- Logo / Brand -->
         <div class="nav-brand">
             <a href="<?php echo $base_url ?? ''; ?>dashboard.php">
-                Mr Auto Expert DOO
+                MR AUTO EXPERT DOO
             </a>
         </div>
 
@@ -64,9 +64,7 @@ $prikazi_lokaciju = ($tip == 'zaposleni');
                 <span class="badge badge-<?php echo $tip; ?>">
                     <?php echo ucfirst($tip); ?>
                 </span>
-                <?php if ($prikazi_lokaciju): ?>
-                    <span class="user-location desktop-only">📍 <?php echo htmlspecialchars($lokacija); ?></span>
-                <?php endif; ?>
+
             </div>
 
             <button class="hamburger" id="hamburger-btn" aria-label="Menu">

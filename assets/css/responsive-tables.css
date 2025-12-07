@@ -25,7 +25,7 @@
 .table-wrapper table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px; /* OBAVEZNA minimalna širina */
+    /* min-width: 1200px; /* OBAVEZNA minimalna širina */
 }
 
 /* Desktop - normalan prikaz */

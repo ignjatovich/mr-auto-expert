@@ -217,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <button type="submit" class="btn btn-primary btn-lg">
                         ✅ Sačuvaj izmene
                     </button>
-                    <a href="../dashboard.php" class="btn btn-secondary btn-lg">
+                    <a href="../../dashboard.php" class="btn btn-secondary btn-lg">
                         ❌ Otkaži
                     </a>
                 </div>
