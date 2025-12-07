@@ -6,6 +6,14 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
+.form-card h2{
+    color: #FF411C;
+}
+
+.checkbox-group .checkbox-label span strong {
+    color: #FF411C !important;
+}
+
 .detail-section h2 {
     color: #FF411C;
     font-size: 20px;
@@ -161,4 +169,17 @@
     .btn-status {
         width: 100%;
     }
+
+    .buttons-details {
+        display: inline-flex;
+        width: 100%;
+        gap: 15px;
+    }
+
+    .buttons-details .btn {
+        padding: 5px;
+        text-align: center;
+    }
 }
+
+

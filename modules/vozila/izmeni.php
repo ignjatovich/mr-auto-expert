@@ -9,6 +9,7 @@ require_once '../../includes/header.php';
 ?>
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/pravna_lica_styles.css">
     <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/camera.css">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>assets/css/detalji.css">
 <?php
 
 // SVI korisnici mogu da izmene vozila, ali zaposleni samo svoja
@@ -544,7 +545,7 @@ $usluge_lista = get_usluge();
                     </div>
 
                     <button type="button" onclick="addCustomUsluga()" class="btn-add-custom">
-                        ➕ Dodaj još jednu custom uslugu
+                        ➕ Dodaj još jednu specifičnu uslugu
                     </button>
                 </div>
 

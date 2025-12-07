@@ -96,6 +96,12 @@ include '../../includes/header.php';
         </form>
     </div>
 
+    <?php if (!empty($pravna_lica)): ?>
+        <div class="table-info">
+            <p>Ukupno: <strong><?php echo count($pravna_lica); ?></strong> pravnih lica</p>
+        </div>
+    <?php endif; ?>
+
     <!-- Scroll hint -->
     <div class="scroll-hint">
         ← Pomerajte tabelu levo/desno da vidite sve kolone →
@@ -158,11 +164,7 @@ include '../../includes/header.php';
             <?php endif; ?>
         </div>
 
-        <?php if (!empty($pravna_lica)): ?>
-            <div class="table-info">
-                <p>Ukupno: <strong><?php echo count($pravna_lica); ?></strong> pravnih lica</p>
-            </div>
-        <?php endif; ?>
+
     </div>
 
     <script>

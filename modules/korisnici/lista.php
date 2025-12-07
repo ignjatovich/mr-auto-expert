@@ -105,6 +105,14 @@ $korisnici = $stmt->fetchAll();
             </form>
         </div>
 
+        <?php if (!empty($korisnici)): ?>
+            <div class="table-info">
+                <p>Ukupno: <strong><?php echo count($korisnici); ?></strong> korisnika</p>
+            </div>
+        <?php endif; ?>
+
+
+        <div class="scroll-hint">← Scroll levo/desno da vidiš sve →</div>
         <!-- TABELA -->
         <div class="table-container">
             <div class="table-wrapper">
@@ -194,14 +202,10 @@ $korisnici = $stmt->fetchAll();
                     </table>
                 <?php endif; ?>
             </div>
-            <div class="scroll-hint">← Scroll levo/desno da vidiš sve →</div>
+
         </div>
 
-        <?php if (!empty($korisnici)): ?>
-            <div class="table-info">
-                <p>Ukupno: <strong><?php echo count($korisnici); ?></strong> korisnika</p>
-            </div>
-        <?php endif; ?>
+
     </div>
 
     <script>

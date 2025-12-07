@@ -264,9 +264,10 @@ tbody tr:hover {
 .table-info {
     background: white;
     padding: 15px 25px;
-    border-radius: 0 0 12px 12px;
+    border-radius: 12px 12px 12px 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     margin-top: -12px;
+    margin-bottom: 25px;
 }
 
 .table-info p {

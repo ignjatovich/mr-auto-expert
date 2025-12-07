@@ -90,7 +90,7 @@ if (!empty($vozilo['custom_usluge'])) {
     <div class="container">
         <div class="page-header">
             <h1>🚗 Detalji vozila: <?php echo e($vozilo['registracija']); ?></h1>
-            <div>
+            <div class="buttons-details">
                 <a href="../../lista_vozila.php" class="btn btn-secondary">← Nazad na listu</a>
                 <?php
                 $moze_menjati = false;

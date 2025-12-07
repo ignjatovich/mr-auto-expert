@@ -38,6 +38,16 @@ $usluge = $stmt->fetchAll();
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($usluge)): ?>
+            <div class="table-info">
+                <p>Ukupno: <strong><?php echo count($usluge); ?></strong> usluga</p>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($usluge)): ?>
+            <div class="scroll-hint">← Scroll levo/desno da vidiš sve →</div>
+        <?php endif; ?>
+
         <!-- TABELA SA RESPONSIVE WRAPPER -->
         <div class="table-container">
             <div class="table-wrapper">
@@ -97,16 +107,10 @@ $usluge = $stmt->fetchAll();
                     </table>
                 <?php endif; ?>
             </div>
-            <?php if (!empty($usluge)): ?>
-                <div class="scroll-hint">← Scroll levo/desno da vidiš sve →</div>
-            <?php endif; ?>
+
         </div>
 
-        <?php if (!empty($usluge)): ?>
-            <div class="table-info">
-                <p>Ukupno: <strong><?php echo count($usluge); ?></strong> usluga</p>
-            </div>
-        <?php endif; ?>
+
     </div>
 
     <script>

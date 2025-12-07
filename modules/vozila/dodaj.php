@@ -442,7 +442,7 @@ include '../../includes/header.php';
                     </div>
 
                     <button type="button" onclick="addCustomUsluga()" class="btn-add-custom">
-                        ➕ Dodaj još jednu custom uslugu
+                        ➕ Dodaj još jednu specifičnu uslugu
                     </button>
                 </div>
 

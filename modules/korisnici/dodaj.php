@@ -109,40 +109,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="form-group">
                         <label for="korisnicko_ime">Korisničko ime *</label>
                         <input
-                            type="text"
-                            id="korisnicko_ime"
-                            name="korisnicko_ime"
-                            required
-                            placeholder="npr. marko.markovic"
-                            value="<?php echo e($_POST['korisnicko_ime'] ?? ''); ?>"
+                                type="text"
+                                id="korisnicko_ime"
+                                name="korisnicko_ime"
+                                required
+                                placeholder="npr. marko.markovic"
+                                value="<?php echo e($_POST['korisnicko_ime'] ?? ''); ?>"
+                                oninput="validateUsername(this)"
                         >
-                        <small>Mora biti jedinstveno</small>
+                        <small>Mora biti jedinstveno, samo mala slova, dozvoljeno: . i _</small>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="sifra">Šifra *</label>
-                            <input
-                                type="password"
-                                id="sifra"
-                                name="sifra"
-                                required
-                                placeholder="Najmanje 6 karaktera"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="sifra"
+                                        name="sifra"
+                                        required
+                                        placeholder="Najmanje 6 karaktera"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="potvrdi_sifru">Potvrdi šifru *</label>
-                            <input
-                                type="password"
-                                id="potvrdi_sifru"
-                                name="potvrdi_sifru"
-                                required
-                                placeholder="Ponovi šifru"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="potvrdi_sifru"
+                                        name="potvrdi_sifru"
+                                        required
+                                        placeholder="Ponovi šifru"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- LIČNI PODACI -->
                 <div class="form-section">
@@ -256,5 +266,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
         </div>
     </div>
+    <script src="<?php echo $base_url; ?>assets/js/prikaz-sifre.js"></script>
 
 <?php require_once '../../includes/footer.php'; ?>

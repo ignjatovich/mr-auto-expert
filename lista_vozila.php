@@ -169,6 +169,12 @@ include 'includes/header.php';
         }
         ?>
 
+        <?php if (!empty($vozila)): ?>
+            <div class="table-info">
+                <p>Ukupno: <strong><?php echo count($vozila); ?></strong> vozila</p>
+            </div>
+        <?php endif; ?>
+
         <!-- Statistika -->
         <div class="stats-grid">
             <div class="stat-card u-radu">
@@ -277,11 +283,7 @@ include 'includes/header.php';
             </div><!-- .table-wrapper -->
         </div><!-- .table-container -->
 
-        <?php if (!empty($vozila)): ?>
-            <div class="table-info">
-                <p>Ukupno: <strong><?php echo count($vozila); ?></strong> vozila</p>
-            </div>
-        <?php endif; ?>
+
     </div>
 
     <style>
