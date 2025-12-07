@@ -875,4 +875,39 @@ tbody tr:hover {
     color: #FF411C;
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    user-select: none;
+    opacity: 0.7;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+}
+.toggle-password {
+    font-size: 13px;      /* veličina ikone */
+    cursor: pointer;      /* pokazivač ruke kada se prelazi mišem */
+    user-select: none;    /* ne može da se selektuje tekst */
+    opacity: 0.8;         /* malo providnosti za bolji izgled */
+}
+
+.toggle-password:hover {
+    opacity: 1;           /* puni kontrast kada se pređe mišem */
+}
+
+
 

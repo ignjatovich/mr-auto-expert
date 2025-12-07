@@ -54,6 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="assets/css/login.css">
 
 </head>
+
+<script>
+    function togglePassword() {
+        const input = document.getElementById("sifra");
+        const icon = document.querySelector(".toggle-password");
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.textContent = "Sakrij šifru";
+        } else {
+            input.type = "password";
+            icon.textContent = "Prikaži šifru";
+        }
+    }
+</script>
+
+
 <body class="login-page">
 <div class="login-container">
     <div class="login-box">
@@ -81,15 +98,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 >
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-group">
                 <label for="sifra">Šifra</label>
-                <input
-                    type="password"
-                    id="sifra"
-                    name="sifra"
-                    required
-                >
+
+                <div class="password-wrapper">
+                    <input
+                            type="password"
+                            id="sifra"
+                            name="sifra"
+                            required
+                    >
+                    <span class="toggle-password" onclick="togglePassword()">Prikaži šifru</span>
+                </div>
             </div>
+
 
             <button type="submit" class="btn btn-primary btn-block">
                 Prijavi se

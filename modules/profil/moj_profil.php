@@ -88,6 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+    <link rel="stylesheet" href="assets/css/style.css">
+
     <div class="container">
         <div class="page-header">
             <h1>👤 Moj profil</h1>
@@ -179,38 +181,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <h2>🔒 Promena šifre</h2>
                     <p style="color: #666; margin-bottom: 15px;">Popuni samo ako želiš da promeniš šifru</p>
 
-                    <div class="form-group">
+                    <div class="form-group password-group">
                         <label for="stara_sifra">Trenutna šifra</label>
-                        <input
-                            type="password"
-                            id="stara_sifra"
-                            name="stara_sifra"
-                            placeholder="Unesite trenutnu šifru"
-                        >
+                        <div class="password-wrapper">
+                            <input
+                                    type="password"
+                                    id="stara_sifra"
+                                    name="stara_sifra"
+                                    placeholder="Unesite trenutnu šifru"
+                                    data-toggle="password"
+                            >
+                            <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                        </div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="nova_sifra">Nova šifra</label>
-                            <input
-                                type="password"
-                                id="nova_sifra"
-                                name="nova_sifra"
-                                placeholder="Najmanje 6 karaktera"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="nova_sifra"
+                                        name="nova_sifra"
+                                        placeholder="Najmanje 6 karaktera"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="potvrdi_sifru">Potvrdi novu šifru</label>
-                            <input
-                                type="password"
-                                id="potvrdi_sifru"
-                                name="potvrdi_sifru"
-                                placeholder="Ponovi novu šifru"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="potvrdi_sifru"
+                                        name="potvrdi_sifru"
+                                        placeholder="Ponovi novu šifru"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- DUGMAD -->
                 <div class="form-actions">
@@ -225,5 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
         </div>
     </div>
+
+    <script src="<?php echo $base_url; ?>assets/js/prikaz-sifre.js"></script>
+
+
 
 <?php require_once '../../includes/footer.php'; ?>
