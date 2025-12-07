@@ -155,7 +155,7 @@ function ima_pristup_lokaciji($lokacija_za_proveru) {
                     <div class="location-info">
                         <h3>Ostružnica</h3>
                         <p class="location-address">Miroslava Belovića 13a</p>
-                        <?php if (isset($lokacije['Ostružnica'])): ?>
+                        <?php if (isset($lokacije['Ostružnica']) && $ostruznica_pristup): ?>
                             <div class="location-stats">
                             <span class="stat-badge stat-danger" title="U radu">
                                 🔴 <?php echo $lokacije['Ostružnica']['u_radu']; ?>
@@ -200,7 +200,8 @@ function ima_pristup_lokaciji($lokacija_za_proveru) {
                     <div class="location-info">
                         <h3>Žarkovo</h3>
                         <p class="location-address">Trgovačka 16a</p>
-                        <?php if (isset($lokacije['Žarkovo'])): ?>
+                        <?php if (isset($lokacije['Žarkovo']) && $zarkovo_pristup): ?>
+
                             <div class="location-stats">
                             <span class="stat-badge stat-danger" title="U radu">
                                 🔴 <?php echo $lokacije['Žarkovo']['u_radu']; ?>
@@ -245,7 +246,7 @@ function ima_pristup_lokaciji($lokacija_za_proveru) {
                     <div class="location-info">
                         <h3>Mirijevo</h3>
                         <p class="location-address">Nine Kirsanove 33</p>
-                        <?php if (isset($lokacije['Mirijevo'])): ?>
+                        <?php if (isset($lokacije['Mirijevo']) && $mirijevo_pristup): ?>
                             <div class="location-stats">
                             <span class="stat-badge stat-danger" title="U radu">
                                 🔴 <?php echo $lokacije['Mirijevo']['u_radu']; ?>
