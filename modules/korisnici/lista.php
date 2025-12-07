@@ -154,11 +154,18 @@ $korisnici = $stmt->fetchAll();
                                 </span>
                                 </td>
                                 <td>
-                                    <?php if ($k['tip_korisnika'] == 'administrator'): ?>
-                                        <span class="badge-lokacija" style="background: #667eea; color: white;">Sve lokacije</span>
-                                    <?php else: ?>
-                                        <span class="badge-lokacija"><?php echo e($k['lokacija']); ?></span>
-                                    <?php endif; ?>
+                                    <?php
+                                    if ($k['sve_lokacije']) {
+                                        echo '<span class="badge-lokacija" style="background: #667eea; color: white;">Sve lokacije</span>';
+                                    } elseif (!empty($k['lokacije'])) {
+                                        $lokacije_array = json_decode($k['lokacije'], true);
+                                        foreach ($lokacije_array as $lok) {
+                                            echo '<span class="badge-lokacija" style="margin: 2px;">' . e($lok) . '</span> ';
+                                        }
+                                    } else {
+                                        echo '<span class="badge-lokacija">' . e($k['lokacija']) . '</span>';
+                                    }
+                                    ?>
                                 </td>
                                 <td style="text-align: center; font-size: 20px;">
                                     <?php if ($k['aktivan']): ?>

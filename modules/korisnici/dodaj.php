@@ -53,10 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $sifra_hash = password_hash($sifra, PASSWORD_DEFAULT);
 
                 // Kreiraj korisnika
+                // Priprema lokacija
+                $sve_lokacije = 0;
+                $lokacije_json = null;
+                $prva_lokacija = null;
+
+                if (isset($_POST['sve_lokacije']) && $_POST['sve_lokacije'] == 1) {
+                    // Sve lokacije
+                    $sve_lokacije = 1;
+                    $prva_lokacija = 'Ostružnica'; // Default
+                } elseif (isset($_POST['lokacije']) && is_array($_POST['lokacije']) && count($_POST['lokacije']) > 0) {
+                    // Više lokacija
+                    $lokacije_json = json_encode($_POST['lokacije']);
+                    $prva_lokacija = $_POST['lokacije'][0];
+                } else {
+                    // Jedna lokacija (zaposleni)
+                    $prva_lokacija = $_POST['lokacija'] ?? '';
+                }
+
                 $stmt = $conn->prepare("
-                    INSERT INTO korisnici (korisnicko_ime, sifra, ime, prezime, email, telefon, tip_korisnika, lokacija, aktivan)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
+
+    
+    INSERT INTO korisnici (korisnicko_ime, sifra, ime, prezime, email, telefon, tip_korisnika, lokacija, lokacije, sve_lokacije, aktivan)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
 
                 $stmt->execute([
                     $korisnicko_ime,
@@ -66,9 +86,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $email,
                     $telefon,
                     $tip_korisnika,
-                    $lokacija,
+                    $prva_lokacija,
+                    $lokacije_json,
+                    $sve_lokacije,
                     $aktivan
                 ]);
+
+                if (in_array($tip_korisnika, ['administrator', 'menadzer'])) {
+                    if (!isset($_POST['sve_lokacije']) && empty($_POST['lokacije'])) {
+                        $greska = 'Morate izabrati bar jednu lokaciju.';
+                    }
+                } else {
+                    if (empty($lokacija)) {
+                        $greska = 'Lokacija je obavezna.';
+                    }
+                }
 
                 $uspeh = "Korisnik '$korisnicko_ime' je uspešno kreiran!";
 
@@ -228,14 +260,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
 
                         <div class="form-group">
-                            <label for="lokacija">Lokacija *</label>
-                            <select id="lokacija" name="lokacija" required>
-                                <option value="">-- Izaberi lokaciju --</option>
-                                <option value="Ostružnica" <?php echo (($_POST['lokacija'] ?? '') == 'Ostružnica') ? 'selected' : ''; ?>>Ostružnica</option>
-                                <option value="Žarkovo" <?php echo (($_POST['lokacija'] ?? '') == 'Žarkovo') ? 'selected' : ''; ?>>Žarkovo</option>
-                                <option value="Mirijevo" <?php echo (($_POST['lokacija'] ?? '') == 'Mirijevo') ? 'selected' : ''; ?>>Mirijevo</option>
-                            </select>
-                            <small>Radnik može pregledati i dodavati vozila samo za svoju lokaciju</small>
+                            <label for="lokacija">Lokacije *</label>
+
+                            <?php if ($_SESSION['tip_korisnika'] == 'administrator' && in_array($tip_korisnika ?? 'zaposleni', ['administrator', 'menadzer'])): ?>
+                                <!-- Checkbox grupa za administratore i menadžere -->
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="lokacije[]" value="Ostružnica"
+                                            <?php echo (in_array('Ostružnica', $_POST['lokacije'] ?? [])) ? 'checked' : ''; ?>>
+                                        <span>📍 Ostružnica</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="lokacije[]" value="Žarkovo"
+                                            <?php echo (in_array('Žarkovo', $_POST['lokacije'] ?? [])) ? 'checked' : ''; ?>>
+                                        <span>📍 Žarkovo</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="lokacije[]" value="Mirijevo"
+                                            <?php echo (in_array('Mirijevo', $_POST['lokacije'] ?? [])) ? 'checked' : ''; ?>>
+                                        <span>📍 Mirijevo</span>
+                                    </label>
+                                </div>
+                                <small>Izaberite jednu ili više lokacija</small>
+
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label class="checkbox-label" style="border: none; padding: 0; background: transparent;">
+                                        <input type="checkbox" name="sve_lokacije" value="1"
+                                            <?php echo (isset($_POST['sve_lokacije'])) ? 'checked' : ''; ?>>
+                                        <span>Pristup svim lokacijama (preporučeno za administratore)</span>
+                                    </label>
+                                </div>
+                            <?php else: ?>
+                                <!-- Običan select za zaposlene -->
+                                <select id="lokacija" name="lokacija" required>
+                                    <option value="">-- Izaberi lokaciju --</option>
+                                    <option value="Ostružnica" <?php echo (($_POST['lokacija'] ?? '') == 'Ostružnica') ? 'selected' : ''; ?>>Ostružnica</option>
+                                    <option value="Žarkovo" <?php echo (($_POST['lokacija'] ?? '') == 'Žarkovo') ? 'selected' : ''; ?>>Žarkovo</option>
+                                    <option value="Mirijevo" <?php echo (($_POST['lokacija'] ?? '') == 'Mirijevo') ? 'selected' : ''; ?>>Mirijevo</option>
+                                </select>
+                                <small>Zaposleni može pristupiti samo jednoj lokaciji</small>
+                            <?php endif; ?>
                         </div>
                     </div>
 

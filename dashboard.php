@@ -15,8 +15,11 @@ $lokacija = $_SESSION['lokacija'];
 // Statistika vozila za trenutnu lokaciju
 $lokacija_korisnika = $_SESSION['lokacija'];
 
-// Ako je administrator ili menadžer, uzmi sve lokacije
-if ($tip == 'administrator' || $tip == 'menadzer') {
+// Dobavi lokacije korisnika
+$korisnik_lokacije = $_SESSION['lokacije'] ?? [$_SESSION['lokacija']];
+
+if ($_SESSION['sve_lokacije'] ?? false) {
+    // Sve lokacije
     $stmt = $conn->query("
         SELECT 
             status,
@@ -25,16 +28,17 @@ if ($tip == 'administrator' || $tip == 'menadzer') {
         GROUP BY status
     ");
 } else {
-    // Zaposleni vidi samo svoju lokaciju
+    // Specifične lokacije
+    $placeholders = str_repeat('?,', count($korisnik_lokacije) - 1) . '?';
     $stmt = $conn->prepare("
         SELECT 
             status,
             COUNT(*) as broj
         FROM vozila
-        WHERE lokacija = ?
+        WHERE lokacija IN ($placeholders)
         GROUP BY status
     ");
-    $stmt->execute([$lokacija_korisnika]);
+    $stmt->execute($korisnik_lokacije);
 }
 
 $stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -44,11 +48,12 @@ $zavrseno = $stats['zavrseno'] ?? 0;
 $placeno = $stats['placeno'] ?? 0;
 
 // Ukupno vozila danas
-if ($tip == 'administrator' || $tip == 'menadzer') {
+if ($_SESSION['sve_lokacije'] ?? false) {
     $stmt = $conn->query("SELECT COUNT(*) as broj FROM vozila WHERE DATE(datum_prijema) = CURDATE()");
 } else {
-    $stmt = $conn->prepare("SELECT COUNT(*) as broj FROM vozila WHERE lokacija = ? AND DATE(datum_prijema) = CURDATE()");
-    $stmt->execute([$lokacija_korisnika]);
+    $placeholders = str_repeat('?,', count($korisnik_lokacije) - 1) . '?';
+    $stmt = $conn->prepare("SELECT COUNT(*) as broj FROM vozila WHERE lokacija IN ($placeholders) AND DATE(datum_prijema) = CURDATE()");
+    $stmt->execute($korisnik_lokacije);
 }
 $vozila_danas = $stmt->fetch()['broj'];
 
@@ -75,17 +80,7 @@ foreach ($lokacije_stats as $stat) {
 }
 
 // Funkcija za proveru da li korisnik ima pristup lokaciji
-function ima_pristup_lokaciji($lokacija_za_proveru) {
-    global $tip, $lokacija_korisnika;
 
-    // Administrator ima pristup svuda
-    if ($tip == 'administrator') {
-        return true;
-    }
-
-    // Menadžer i zaposleni imaju pristup samo svojoj lokaciji
-    return ($lokacija_za_proveru == $lokacija_korisnika);
-}
 ?>
 
     <div class="container">

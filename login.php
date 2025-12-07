@@ -28,12 +28,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($korisnik && password_verify($sifra, $korisnik['sifra'])) {
             // Uspešan login
+            // Uspešan login
             $_SESSION['korisnik_id'] = $korisnik['id'];
             $_SESSION['korisnicko_ime'] = $korisnik['korisnicko_ime'];
             $_SESSION['ime'] = $korisnik['ime'];
             $_SESSION['prezime'] = $korisnik['prezime'];
             $_SESSION['tip_korisnika'] = $korisnik['tip_korisnika'];
-            $_SESSION['lokacija'] = $korisnik['lokacija'];
+            $_SESSION['lokacija'] = $korisnik['lokacija']; // Backward compatibility
+
+// Dodaj lokacije u sesiju
+            if ($korisnik['sve_lokacije']) {
+                $_SESSION['lokacije'] = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
+                $_SESSION['sve_lokacije'] = true;
+            } elseif (!empty($korisnik['lokacije'])) {
+                $_SESSION['lokacije'] = json_decode($korisnik['lokacije'], true);
+                $_SESSION['sve_lokacije'] = false;
+            } else {
+                $_SESSION['lokacije'] = [$korisnik['lokacija']];
+                $_SESSION['sve_lokacije'] = false;
+            }
+
+// Redirect
+            if (isset($_SESSION['redirect_after_login'])) {
+                $redirect_url = $_SESSION['redirect_after_login'];
+                unset($_SESSION['redirect_after_login']);
+                header('Location: ' . $redirect_url);
+            } else {
+                header('Location: dashboard.php');
+            }
+            exit();
 
             // NOVO: Proveri da li ima sačuvanu stranicu za redirect
             if (isset($_SESSION['redirect_after_login'])) {

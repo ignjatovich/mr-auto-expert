@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container">
         <div class="page-header">
             <h1>👤 Moj profil</h1>
-            <a href="../dashboard.php" class="btn btn-secondary">← Nazad</a>
+            <a href="../../dashboard.php" class="btn btn-secondary">← Nazad</a>
         </div>
 
         <?php if ($greska): ?>
