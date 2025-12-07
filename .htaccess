@@ -1,0 +1,24 @@
+# Enable Rewrite Engine
+RewriteEngine On
+RewriteBase /app/
+
+# Custom 404 Error Page
+ErrorDocument 404 /404.php
+
+# Prevent directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect config file
+<Files "config.php">
+    Order allow,deny
+    Deny from all
+</Files>
+```
+
+---

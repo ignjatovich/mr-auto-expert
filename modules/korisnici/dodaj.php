@@ -153,31 +153,41 @@ require_once '../../includes/header.php';
                                 required
                                 placeholder="npr. marko.markovic"
                                 value="<?php echo e($_POST['korisnicko_ime'] ?? ''); ?>"
+                                pattern="^[a-z0-9._]+$"
+                                title="Samo mala slova, brojevi, tačka i donja crta su dozvoljeni."
                         >
-                        <small>Mora biti jedinstveno</small>
+                        <small>Samo mala slova, brojevi, tačka i donja crta su dozvoljeni.</small>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="sifra">Šifra *</label>
-                            <input
-                                    type="password"
-                                    id="sifra"
-                                    name="sifra"
-                                    required
-                                    placeholder="Najmanje 6 karaktera"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="sifra"
+                                        name="sifra"
+                                        required
+                                        placeholder="Najmanje 6 karaktera"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group password-group">
                             <label for="potvrdi_sifru">Potvrdi šifru *</label>
-                            <input
-                                    type="password"
-                                    id="potvrdi_sifru"
-                                    name="potvrdi_sifru"
-                                    required
-                                    placeholder="Ponovi šifru"
-                            >
+                            <div class="password-wrapper">
+                                <input
+                                        type="password"
+                                        id="potvrdi_sifru"
+                                        name="potvrdi_sifru"
+                                        required
+                                        placeholder="Ponovi šifru"
+                                        data-toggle="password"
+                                >
+                                <span class="toggle-password" onclick="togglePassword(this)">Prikaži šifru</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -414,5 +424,7 @@ require_once '../../includes/header.php';
             promeniTipKorisnika();
         });
     </script>
+
+    <script src="<?php echo $base_url; ?>assets/js/prikaz-sifre.js"></script>
 
 <?php require_once '../../includes/footer.php'; ?>

@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="login-container">
     <div class="login-box">
         <div class="login-header">
-            <h1>🚗 MR AUTO EXPERT DOO</h1>
+            <h1>MR AUTO EXPERT DOO</h1>
             <p>Prijavite se na sistem</p>
         </div>
 
