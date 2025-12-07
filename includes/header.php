@@ -2,8 +2,15 @@
 // Header template - za korišćenje na svim stranicama
 // Mora biti pozvan POSLE proveri_login() funkcije
 
+// UKLONI ILI ZAKOMENTIRAJ OVE LINIJE:
+// if (!isset($_SESSION['korisnik_id'])) {
+//     die('Sesija nije aktivna. Pozovi proveri_login() pre include header.php');
+// }
+
+// DODAJ PROVERU SA LEPOM STRANICOM:
 if (!isset($_SESSION['korisnik_id'])) {
-    die('Sesija nije aktivna. Pozovi proveri_login() pre include header.php');
+    pokazi_access_denied();
+    exit();
 }
 
 $ime = $_SESSION['ime'] ?? '';

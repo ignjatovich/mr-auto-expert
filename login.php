@@ -35,7 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['tip_korisnika'] = $korisnik['tip_korisnika'];
             $_SESSION['lokacija'] = $korisnik['lokacija'];
 
-            header('Location: dashboard.php');
+            // NOVO: Proveri da li ima sačuvanu stranicu za redirect
+            if (isset($_SESSION['redirect_after_login'])) {
+                $redirect_url = $_SESSION['redirect_after_login'];
+                unset($_SESSION['redirect_after_login']);
+                header('Location: ' . $redirect_url);
+            } else {
+                header('Location: dashboard.php');
+            }
             exit();
         } else {
             $greska = 'Pogrešno korisničko ime/email ili šifra.';
@@ -75,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="login-container">
     <div class="login-box">
         <div class="login-header">
-            <h1>🚗 Mr Auto Expert DOO</h1>
+            <h1> MR AUTO EXPERT DOO</h1>
             <p>Prijavite se na sistem</p>
         </div>
 
@@ -85,16 +92,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_SESSION['redirect_after_login'])): ?>
+            <div class="alert" style="background: #e7f3ff; color: #0066cc; border-left: 4px solid #0066cc;">
+                💡 Prijavite se da biste pristupili stranici koju ste tražili.
+            </div>
+        <?php endif; ?>
+
         <form method="POST" action="" class="login-form">
             <div class="form-group">
                 <label for="korisnicko_ime">Korisničko ime ili email adresa</label>
                 <input
-                    type="text"
-                    id="korisnicko_ime"
-                    name="korisnicko_ime"
-                    required
-                    autofocus
-                    value="<?php echo htmlspecialchars($_POST['korisnicko_ime'] ?? ''); ?>"
+                        type="text"
+                        id="korisnicko_ime"
+                        name="korisnicko_ime"
+                        required
+                        autofocus
+                        value="<?php echo htmlspecialchars($_POST['korisnicko_ime'] ?? ''); ?>"
                 >
             </div>
 
@@ -117,10 +130,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 Prijavi se
             </button>
         </form>
-
         <div class="login-footer">
-            <p><strong></strong> / <strong></strong></p>
+            <p>Ako imate poteškoća, kontaktirajte <strong> administratora </strong> ili <strong> menadžera </strong> sistema </p>
         </div>
+
     </div>
 </div>
 </body>

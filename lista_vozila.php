@@ -17,7 +17,7 @@ $lokacija_korisnika = $_SESSION['lokacija'];
 
 // Određivanje koje lokacije korisnik može da vidi
 $dostupne_lokacije = [];
-if ($tip == 'administrator' || $tip == 'menadzer') {
+if ($tip == 'administrator') {
     $dostupne_lokacije = ['Ostružnica', 'Žarkovo', 'Mirijevo'];
 } else {
     $dostupne_lokacije = [$lokacija_korisnika];
